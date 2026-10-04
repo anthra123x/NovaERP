@@ -1,18 +1,23 @@
-# Tecnicell ERP / ERP Cilmax 🚀
+# Nova ERP 🚀
 
-Sistema integral de gestión empresarial, punto de venta (POS), control de inventario en tiempo real, administración de catálogo web y asistente inteligente con IA para comercio minorista y servicios técnicos.
+Plataforma moderna de gestión comercial multi-negocio, punto de venta (POS) omnicanal, control de existencias en tiempo real, administración de catálogo web y asistente inteligente con IA.
+
+[![Production](https://img.shields.io/badge/Production-Live-emerald?style=for-the-badge&logo=vercel)](https://erpcilmax.vercel.app)
+[![Next.js](https://img.shields.io/badge/Next.js-16.2.10-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x_Strict-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon_Serverless-4169e1?style=for-the-badge&logo=postgresql)](https://neon.tech/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4_OKLCH-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
+[![Tests](https://img.shields.io/badge/Tests-234_Passing-success?style=for-the-badge&logo=vitest)](https://vitest.dev/)
 
 ---
 
-## 📌 Estado de Despliegue y Entorno de Ejecución
+## 🌐 Despliegue en Producción
 
-> **Nota Importante:** Actualmente este proyecto **NO tiene ningún dominio público desplegado en producción**. Se ejecuta y opera de manera **local (On-Premise / Servidor Local de Desarrollo)** en:
-> 
-> ```
-> http://localhost:3000
-> ```
->
-> La arquitectura está lista para desplegarse en la nube (Vercel, Railway, VPS con Docker/Coolify) cuando se adquiera o configure un dominio de producción.
+El sistema está desplegado de forma continua en Vercel conectado con Neon PostgreSQL:
+
+- **URL de Producción**: **[erpcilmax.vercel.app](https://erpcilmax.vercel.app)**
+- **Acceso / Iniciar Sesión**: [erpcilmax.vercel.app/login](https://erpcilmax.vercel.app/login)
+- **Registro de Empresa y Onboarding**: [erpcilmax.vercel.app/register](https://erpcilmax.vercel.app/register)
 
 ---
 
@@ -20,28 +25,42 @@ Sistema integral de gestión empresarial, punto de venta (POS), control de inven
 
 | Capa | Tecnología | Detalle |
 |------|-----------|---------|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) | React 19, compilación Webpack + WASM SWC |
-| **Lenguaje** | [TypeScript 5](https://www.typescriptlang.org/) | Modo estricto (`strict: true`) |
+| **Framework** | [Next.js 16](https://nextjs.org/) (App Router) | React 19, compilación Webpack + WASM SWC bindings |
+| **Lenguaje** | [TypeScript 5](https://www.typescriptlang.org/) | Modo estricto habilitado (`strict: true`) |
 | **Base de Datos** | [PostgreSQL (Neon)](https://neon.tech/) | Servidor serverless, pooler `pgcat` con TLS obligatorio |
 | **ORM** | [Prisma 5.22](https://www.prisma.io/) | Conexión singleton, migraciones versionadas en `prisma/migrations` |
-| **Estilos & UI** | [Tailwind CSS v4](https://tailwindcss.com/) | Estética industrial/brutalista (`--radius: 0px`), shadcn/ui + Base UI v1, Lucide Icons |
-| **Autenticación** | [Supabase Auth](https://supabase.com/) | Gestión SSR segura con `@supabase/ssr` y proxy de rutas protegidas |
+| **Estilos & UI** | [Tailwind CSS v4](https://tailwindcss.com/) | Paleta OKLCH, shadcn/ui + Base UI v1, micro-animaciones, Lucide Icons |
+| **Autenticación** | [Supabase Auth](https://supabase.com/) | Gestión SSR segura con `@supabase/ssr` y proxy middleware |
 | **Validación** | [Zod 4](https://zod.dev/) | Esquemas en `@/lib/validations.ts` |
 | **Formularios** | [React Hook Form](https://react-hook-form.com/) | Integración con `@hookform/resolvers/zod` |
 | **Documentos & PDF** | [@react-pdf/renderer](https://react-pdf.org/) | Facturas POS, recibos térmicos y estados de cuenta en `/print` |
-| **Testing** | [Vitest](https://vitest.dev/) | 222 tests unitarios automatizados |
+| **Testing** | [Vitest](https://vitest.dev/) | 234 tests unitarios y de integración automatizados |
 | **Inteligencia Artificial** | Asistente Multi-Agente | Soporte para OpenAI, Anthropic, Google Gemini y contingencia Mock |
 | **Monitoreo** | [@sentry/nextjs](https://sentry.io/) | Instrumentación runtime completa en cliente, servidor y edge |
 
 ---
 
-## 📦 Módulos Principales
+## 🏢 Adaptabilidad Multi-Negocio y Flujo por Sector
+
+Nova ERP incluye un motor de flujo de trabajo (`src/lib/business-workflow.ts`) que adapta márgenes, políticas y catálogos según la actividad económica del negocio:
+
+1. **Comercio General & Mostrador**: Ventas ágiles, artículos variados y ticket rápido de mostrador.
+2. **Tecnología, Telefonía & Taller**: Control estricto de números de serie, repuestos OLED, garantías de 90 días y órdenes técnicas.
+3. **Moda, Calzado & Confección**: Matriz de tallas, colores, temporadas y políticas de cambio en mostrador.
+4. **Minimarket, Abarrotes & Alimentos**: Alta rotación, escaneo continuo de códigos de barras, lotes y fechas de vencimiento.
+5. **Ferretería & Materiales de Construcción**: Artículos a granel, medidas, kits industriales y cotizaciones para obra.
+6. **Farmacia & Cuidado de la Salud**: Control de registro sanitario (INVIMA), fórmulas médicas y convenios.
+7. **Servicios Profesionales & Talleres Especializados**: Mano de obra certificada, informes de diagnóstico y anticipos de servicio.
+
+---
+
+## 📦 Módulos Principales del Sistema
 
 ### 1. 🛒 Punto de Venta (POS - `/sales`)
 - Carrito de compras reactivo con atajos de teclado para agilidad en caja.
 - Múltiples formas de pago: Efectivo, Nequi, Daviplata, Tarjeta débito/crédito, Transferencia bancaria y Crédito directo.
 - Validación de precios mínimos (prohibida la venta por debajo del precio de compra).
-- Generación de facturas electrónicas/tickets en PDF optimizados para impresión térmica y estándar.
+- Generación de facturas electrónicas/tickets en PDF optimizados para tirilla térmica (80mm/58mm) y estándar.
 
 ### 2. 📦 Inventario y Almacén (`/inventory`)
 - Catálogo de productos con categorías, proveedores, código de barras y referencia interna.
@@ -62,8 +81,8 @@ Sistema integral de gestión empresarial, punto de venta (POS), control de inven
   - Bandeja de entrada de mensajes de contacto.
   - Gestión de pedidos online: flujo `PENDING` ➔ `CONFIRMED` ➔ `CONVERTED` (a venta POS) o `CANCELLED`.
 - **API Pública REST (`/api/web/*`)**:
-  - Endpoints públicos sin requerimiento de sesión para alimentar cualquier frontend o storefront desacoplado (Astro, Next.js, móviles).
-  - Incluye catálogo paginado, categorías, búsqueda, pedidos con código amigable `ORD-XXXX` y rate-limiting por IP.
+  - Endpoints públicos sin requerimiento de sesión para alimentar cualquier storefront desacoplado (Astro, Next.js, móviles).
+  - Incluye catálogo paginado, categorías, búsqueda, pedidos con código legible `ORD-XXXX` y rate-limiting por IP.
 
 ### 4. 💰 Finanzas y Flujo de Caja (`/finances`)
 - Registro de transacciones operativas y no operativas (Ingresos y Gastos).
@@ -72,21 +91,20 @@ Sistema integral de gestión empresarial, punto de venta (POS), control de inven
 - Balance neto mensual consolidado.
 
 ### 5. 🤖 Asistente de Negocio con Inteligencia Artificial (`/assistant`)
-- Chat conversacional embebido (accesible en pantalla completa y como widget flotante global).
-- Inyección de contexto en vivo del negocio (ventas del día, balance del mes, crédito pendiente, stock crítico).
-- **Multi-agente con rotación automática**: Conmuta entre proveedores (OpenAI, Anthropic, Google) si un agente reporta límite de cuota o rate limit.
+- Chat conversacional embebido con contexto en vivo del negocio (ventas hoy, balance del mes, crédito pendiente, stock crítico).
+- **Multi-agente con rotación automática**: Conmuta entre proveedores (OpenAI, Anthropic, Google) ante límites de cuota (429).
 - **Herramientas de consulta segura (Read-Only)**: Permite consultar estadísticas, pedidos y finanzas sin alterar la base de datos.
 - **Modo contingencia (Mock)**: Opera con respuestas informadas de la base de datos local incluso sin claves externas configuradas.
 
 ### 6. 👥 Clientes y Gestión de Créditos (`/clients`, `/credits`)
 - Directorio de clientes con historial de compras.
 - Control de créditos, saldo adeudado y registro de abonos parciales.
-- Estado de cuenta exportable.
+- Estado de cuenta exportable e imprimible en PDF.
 
 ### 7. 📊 Dashboard y Reportes (`/dashboard`, `/reports`)
 - Métricas del día: Ventas hoy, dinero recaudado, créditos por cobrar, productos con bajo stock.
-- Gráficos comparativos mensuales y distribución por métodos de pago.
-- Exportación de reportes a Microsoft Excel (`.xlsx`).
+- Comparativos mensuales y distribución por métodos de pago.
+- Exportación de reportes completos a Microsoft Excel (`.xlsx`).
 
 ---
 
@@ -156,11 +174,12 @@ El servidor estará disponible de inmediato en **`http://localhost:3000`**.
 |--------|-------------|
 | `npm run dev` | Inicia el servidor de desarrollo en `http://localhost:3000` |
 | `npm run build` | Genera el cliente Prisma y compila el bundle de producción |
-| `npm run test` | Ejecuta la suite completa de 222 tests unitarios con Vitest |
+| `npm run test` | Ejecuta la suite completa de 234 tests unitarios con Vitest |
 | `npm run typecheck` | Comprobación estricta de tipos de TypeScript sin emitir código |
 | `npm run lint` | Ejecuta ESLint y detector de imports no utilizados |
 | `npm run db:push` | Sincroniza el esquema de Prisma directamente a la base de datos |
 | `npm run db:migrate` | Crea una nueva migración de Prisma a partir de cambios en `schema.prisma` |
+| `npm run db:migrate:deploy` | Aplica migraciones pendientes a la base de datos en producción |
 | `npm run db:studio` | Abre Prisma Studio en el navegador para inspeccionar tablas |
 | `npm run web:import` | Importador de catálogo web |
 
@@ -174,11 +193,13 @@ El proyecto sigue una arquitectura **monolítica modular por capas** ubicada en 
 - `*.service.ts`: **Capa de Negocio y Persistencia**. Contiene transacciones atómicas (`prisma.$transaction`), consultas SQL y lógica contable/inventario.
 - `index.ts`: Punto de exportación público del módulo (barrel).
 
+Para más detalles, consulta la documentación técnica en [`docs/architecture/`](./docs/architecture/).
+
 ---
 
 ## 🔒 Reglas Críticas de Negocio
 
 1. **`Product.stock` es la única fuente de verdad**: El catálogo web jamás escribe directamente sobre las existencias de inventario.
 2. **Costo vs. Precio**: No se permite registrar una venta donde `unitPrice < purchasePrice`.
-3. **Reserva de Stock**: Los pedidos web reservan stock únicamente al pasar a estado `CONFIRMED`. Al cancelarse se liberan (`RELEASE`), y al convertirse en venta POS no se descuentan duplicadamente.
+3. **Reserva de Stock**: Los pedidos web reservan stock únicamente al pasar a estado `CONFIRMED`. Al cancelarse se liberan (`RELEASE`), y al convertirse en venta POS no se descuentan duplicadamente (`stockReserved: true`).
 4. **Borrado Lógico**: Productos y clientes utilizan `deletedAt` (Soft Delete).

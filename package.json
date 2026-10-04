@@ -1,7 +1,7 @@
 {
   "name": "erpcilmax",
   "version": "0.1.0",
-  "description": "Tecnicell ERP / ERP Cilmax - Sistema integral de gestión de inventario, punto de venta (POS), finanzas, catálogo web y asistente IA",
+  "description": "Nova ERP - Plataforma moderna de gestión comercial multi-negocio, punto de venta (POS) omnicanal, cartera y asistente IA",
   "repository": {
     "type": "git",
     "url": "https://github.com/anthra123x/ERPcilmax.git"

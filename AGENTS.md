@@ -4,7 +4,7 @@
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 <!-- END:nextjs-agent-rules -->
 
-# Tecnicell ERP — Contexto Completo para el Agente
+# Nova ERP — Contexto Completo para el Agente
 
 ## Stack tecnológico
 
@@ -22,7 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Charts | Ninguno | - | Gráficos server-side; `recharts` instalado pero sin uso |
 | PDF | @react-pdf/renderer | 4.9.0 | Facturas POS, estado de cuenta y recibos (`/print` + `/api/sales/*/pdf`) |
 | Excel | xlsx (SheetJS) | 0.18.5 | Exportación de reportes |
-| Testing | Vitest | 4.1.7 | 222 tests en 20 files |
+| Testing | Vitest | 4.1.7 | 234 tests en 21 files |
 | Lint | ESLint | 9.x | `eslint-config-next` + `unused-imports` |
 | Format | Prettier | - | Config en `.prettierrc` |
 | Monitoreo | @sentry/nextjs | 10.53.1 | Instalado pero INACTIVO: `SENTRY_DSN` está vacío en `.env.local` y en `.env.example` → no se envían eventos |
@@ -34,7 +34,7 @@ npm run dev         # Dev server (http://localhost:3000) + React Scan for rerend
 npm run build       # Prisma generate + Next build (usa Webpack + WASM SWC)
 npm run lint        # ESLint (incluye detección de imports muertos)
 npm run typecheck   # TypeScript check sin emitir
-npm run test        # Vitest (222 tests)
+npm run test        # Vitest (234 tests)
 npm run db:push     # Sync schema a DB (dev)
 npm run db:studio   # Prisma Studio
 npm run db:migrate  # Crear migración
@@ -151,25 +151,12 @@ separadas. La regla es mecánica, no una recomendación: ESLint prohíbe importa
 9. **Middleware**: `proxy.ts` usa Supabase SSR con `getAll()`/`setAll()` + `applyCookies()`.
 10. **Pedidos web**: nace `PENDING` → `CONFIRMED` (descuenta stock con movimiento `RESERVATION`) → `CONVERTED`/`CANCELLED`. Cancelar un `CONFIRMED` restaura stock (`RELEASE`). Convertir no descuenta dos veces (`createSale` con `stockReserved: true`). Referencia legible `ORD-XXXX` desde `SystemSettings.nextWebOrderNumber`.
 
-## Documentación compartida
-
-Submodule en `docs/` → eliminado
-
-**Leer primero:**
-- `docs/docs/architecture/00-SYSTEM_OVERVIEW.md` — Visión general
-- `docs/docs/architecture/01-SHARED_DATABASE.md` — Base de datos compartida
-- `docs/docs/architecture/03-ORDER_FLOW.md` — Flujo de pedidos (crítico: stock side effects)
-
-**Actualizar docs:**
-```bash
-cd docs && git add -A && git commit -m "mensaje" && git push origin main
-cd .. && git add docs && git commit -m "docs: sync submodule" && git push
-```
-
-**Recibir cambios:**
-```bash
-git submodule update --remote docs && git add docs && git commit -m "docs: sync submodule" && git push
-```
+## Documentación de arquitectura
+Documentación técnica ubicada en `docs/architecture/`:
+- [`01-SYSTEM_OVERVIEW.md`](./docs/architecture/01-SYSTEM_OVERVIEW.md) — Visión general, stack y entornos
+- [`02-DATABASE_SCHEMA.md`](./docs/architecture/02-DATABASE_SCHEMA.md) — Base de datos Neon, Prisma y modelos
+- [`03-ORDER_FLOW.md`](./docs/architecture/03-ORDER_FLOW.md) — Flujo de pedidos web y efectos atómicos en stock
+- [`04-AI_ASSISTANT.md`](./docs/architecture/04-AI_ASSISTANT.md) — Asistente multi-agente, rotación y herramientas
 
 ## Storefront integration
 
