@@ -73,22 +73,22 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-dvh bg-[#f4f5f7] dark:bg-background text-foreground overflow-hidden">
+    <div className="flex h-dvh bg-[#f0f2f5] dark:bg-[#07090e] text-foreground overflow-hidden">
       {/* Overlay para móviles */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs lg:hidden transition-opacity"
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xs lg:hidden transition-opacity duration-200"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Contenedor del Sidebar con ancho dinámico */}
+      {/* Contenedor del Sidebar con estética Capsule Dock flotante (referencia Imagen 1) */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 transform transition-all duration-300 ease-in-out lg:static lg:transform-none shrink-0 shadow-2xl lg:shadow-none',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-          !isMobile && isCollapsed ? 'lg:w-18' : 'lg:w-64',
-          'w-64',
+          'fixed inset-y-3 left-3 z-50 transition-all duration-300 ease-in-out lg:static lg:inset-auto lg:my-3 lg:ml-3 lg:mr-2 lg:h-[calc(100dvh-1.5rem)] shrink-0',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1.5rem)] lg:translate-x-0',
+          !isMobile && isCollapsed ? 'w-16 lg:w-16' : 'w-64 lg:w-64',
+          isMobile && 'w-72',
         )}
       >
         <Sidebar
@@ -99,8 +99,8 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         />
       </aside>
 
-      {/* Área Principal de Contenido */}
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0">
+      {/* Área Principal de Contenido con estética de panel flotante integrado */}
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0 lg:my-3 lg:mr-3 lg:h-[calc(100dvh-1.5rem)] lg:rounded-3xl lg:border lg:border-border/70 lg:bg-background/95 lg:shadow-xs">
         <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
           <div className="mx-auto max-w-[1600px] w-full">{children}</div>

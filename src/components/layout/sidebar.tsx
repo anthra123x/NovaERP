@@ -13,9 +13,9 @@ import {
   Settings,
   Keyboard,
   PanelLeftClose,
+  PanelLeftOpen,
   X,
 } from 'lucide-react'
-import { NovaLogo } from '@/components/ui/nova-logo'
 import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
 // Módulos principales de navegación
@@ -54,22 +54,38 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground select-none border-r border-sidebar-border/60 transition-all duration-200">
-      {/* Header superior: h-16 alineado exactamente con el Header principal de la página */}
+    <div className="flex h-full w-full flex-col bg-slate-950/95 dark:bg-[#070b12]/95 text-sidebar-foreground select-none rounded-3xl border border-white/10 shadow-2xl backdrop-blur-xl overflow-visible transition-all duration-300">
+      {/* Header superior: h-16 alineado con el Header principal */}
       <div
         className={cn(
-          'flex h-16 items-center border-b border-sidebar-border/40 shrink-0 transition-all duration-200',
+          'flex h-16 items-center border-b border-white/[0.08] shrink-0 transition-all duration-200',
           collapsed ? 'justify-center px-1' : 'justify-between px-3.5',
         )}
       >
         {!collapsed ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <NovaLogo
-              size="sm"
-              showWordmark={false}
-              logoUrl={workflow.logoUrl}
-              businessName={workflow.companyName}
-            />
+            {/* Emblema circular en modo expandido */}
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/[0.08] text-white ring-1 ring-white/15 overflow-hidden shadow-inner">
+              {workflow.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={workflow.logoUrl}
+                  alt={workflow.companyName || 'Logo de la empresa'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white stroke-[2.2]"
+                >
+                  <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="12" cy="12" r="1.5" fill="#34d399" />
+                </svg>
+              )}
+            </div>
             <div className="flex flex-col min-w-0">
               <span className="truncate text-xs font-bold text-white tracking-tight uppercase">
                 {workflow.companyName || 'Nova ERP'}
@@ -81,21 +97,36 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
             </div>
           </div>
         ) : (
-          <div className="relative group">
+          /* Emblema circular estilo cápsula dock (referencia Imagen 1) */
+          <div className="relative group flex justify-center w-full">
             <button
               type="button"
               onClick={onToggleCollapse}
               title="Expandir barra lateral"
-              className="flex items-center justify-center h-10 w-10 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
+              aria-label="Expandir barra lateral"
+              className="group/btn relative flex h-10 w-10 items-center justify-center rounded-full bg-white/[0.08] text-white ring-1 ring-white/15 hover:bg-white/[0.15] hover:ring-emerald-400/40 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-inner"
             >
-              <NovaLogo
-                size="sm"
-                showWordmark={false}
-                logoUrl={workflow.logoUrl}
-                businessName={workflow.companyName}
-              />
+              {workflow.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={workflow.logoUrl}
+                  alt={workflow.companyName || 'Logo'}
+                  className="h-full w-full rounded-full object-cover"
+                />
+              ) : (
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-white stroke-[2.2] transition-transform duration-300 group-hover/btn:rotate-45"
+                >
+                  <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
+                  <circle cx="12" cy="12" r="1.5" fill="#34d399" />
+                </svg>
+              )}
             </button>
-            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/10 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+            <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-slate-900/95 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/15 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
               {workflow.companyName || 'Nova ERP'} &bull; Click para expandir
             </div>
           </div>
@@ -135,7 +166,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
       {/* Navegación de módulos principales */}
       <nav
         className={cn(
-          'flex-1 overflow-y-auto overflow-x-hidden py-3',
+          'flex-1 overflow-y-auto overflow-x-visible py-3',
           collapsed ? 'px-2 space-y-2 flex flex-col items-center' : 'px-3 space-y-1',
         )}
       >
@@ -150,16 +181,22 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                   onClick={handleLinkClick}
                   aria-label={item.name}
                   className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 cursor-pointer relative',
+                    'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer relative',
                     active
-                      ? 'bg-white/10 text-emerald-400 font-semibold shadow-xs ring-1 ring-white/15 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-emerald-400'
-                      : 'text-sidebar-foreground/65 hover:bg-white/[0.06] hover:text-white',
+                      ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 shadow-xs'
+                      : 'text-sidebar-foreground/60 hover:bg-white/[0.08] hover:text-white hover:scale-105 active:scale-95',
                   )}
                 >
                   <item.icon className="h-4.5 w-4.5 shrink-0" />
+                  {active && (
+                    <span
+                      className="absolute -right-1 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.95)]"
+                      aria-hidden="true"
+                    />
+                  )}
                 </Link>
 
-                <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/10 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-slate-900/95 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/15 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
                   {item.name}
                 </div>
               </div>
@@ -172,10 +209,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
               href={item.href}
               onClick={handleLinkClick}
               className={cn(
-                'group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
+                'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150',
                 active
-                  ? 'bg-white/[0.08] text-white font-medium border border-white/10 shadow-xs before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-emerald-400'
-                  : 'text-sidebar-foreground/70 hover:bg-white/[0.04] hover:text-white',
+                  ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
+                  : 'text-sidebar-foreground/70 hover:bg-white/[0.06] hover:text-white',
               )}
             >
               <item.icon
@@ -185,14 +222,18 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                 )}
               />
               <span className="flex-1 truncate tracking-tight">{item.name}</span>
+              {active && (
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] shrink-0"
+                  aria-hidden="true"
+                />
+              )}
             </Link>
           )
         })}
 
         {/* Separador y enlace de Administración */}
-        <div
-          className={cn('border-t border-sidebar-border/40 pt-2.5 mt-2.5 w-full', collapsed && 'flex justify-center')}
-        >
+        <div className={cn('border-t border-white/[0.08] pt-2 mt-2 w-full', collapsed && 'flex justify-center')}>
           {collapsed ? (
             <div className="relative group flex justify-center w-full">
               <Link
@@ -200,15 +241,21 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                 onClick={handleLinkClick}
                 aria-label="Administración"
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-150 cursor-pointer relative',
-                  pathname === '/admin'
-                    ? 'bg-white/10 text-emerald-400 font-semibold shadow-xs ring-1 ring-white/15 before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-emerald-400'
-                    : 'text-sidebar-foreground/65 hover:bg-white/[0.06] hover:text-white',
+                  'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer relative',
+                  pathname === '/admin' || pathname.startsWith('/admin/')
+                    ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 shadow-xs'
+                    : 'text-sidebar-foreground/60 hover:bg-white/[0.08] hover:text-white hover:scale-105 active:scale-95',
                 )}
               >
                 <Settings className="h-4.5 w-4.5 shrink-0" />
+                {(pathname === '/admin' || pathname.startsWith('/admin/')) && (
+                  <span
+                    className="absolute -right-1 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.95)]"
+                    aria-hidden="true"
+                  />
+                )}
               </Link>
-              <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/10 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-slate-900/95 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/15 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
                 Administración
               </div>
             </div>
@@ -217,38 +264,62 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
               href="/admin"
               onClick={handleLinkClick}
               className={cn(
-                'group relative flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-150',
-                pathname === '/admin'
-                  ? 'bg-white/[0.08] text-white font-medium border border-white/10 shadow-xs before:absolute before:left-0 before:top-2 before:bottom-2 before:w-1 before:rounded-r-full before:bg-emerald-400'
-                  : 'text-sidebar-foreground/70 hover:bg-white/[0.04] hover:text-white',
+                'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150',
+                pathname === '/admin' || pathname.startsWith('/admin/')
+                  ? 'bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-500/30 font-medium'
+                  : 'text-sidebar-foreground/70 hover:bg-white/[0.06] hover:text-white',
               )}
             >
               <Settings
                 className={cn(
                   'h-4.5 w-4.5 shrink-0 transition-colors duration-150',
-                  pathname === '/admin' ? 'text-emerald-400' : 'text-sidebar-foreground/60 group-hover:text-white',
+                  pathname === '/admin' || pathname.startsWith('/admin/')
+                    ? 'text-emerald-400'
+                    : 'text-sidebar-foreground/60 group-hover:text-white',
                 )}
               />
               <span className="flex-1 truncate tracking-tight">Administración</span>
+              {(pathname === '/admin' || pathname.startsWith('/admin/')) && (
+                <span
+                  className="h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(52,211,153,0.8)] shrink-0"
+                  aria-hidden="true"
+                />
+              )}
             </Link>
           )}
         </div>
       </nav>
 
-      {/* Pie de la barra lateral: atajos de teclado limpios */}
-      <div className="border-t border-sidebar-border/40 p-2.5 shrink-0">
+      {/* Pie de la barra lateral: atajos y toggle */}
+      <div className="border-t border-white/[0.08] p-2 shrink-0">
         {collapsed ? (
-          <div className="relative group flex justify-center w-full">
-            <button
-              type="button"
-              onClick={onToggleCollapse}
-              title="Expandir barra lateral"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-sidebar-foreground/40 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-            >
-              <Keyboard className="h-4 w-4" />
-            </button>
-            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-[11px] font-mono whitespace-nowrap shadow-xl border border-white/10 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-              Alt+Q: Buscar · Alt+V: Ventas
+          <div className="flex flex-col items-center gap-1.5">
+            <div className="relative group flex justify-center w-full">
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                title="Expandir barra lateral"
+                aria-label="Expandir barra lateral"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-sidebar-foreground/45 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <PanelLeftOpen className="h-4 w-4" />
+              </button>
+              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-slate-900/95 text-white text-[11px] font-medium whitespace-nowrap shadow-xl border border-white/15 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+                Expandir barra lateral
+              </div>
+            </div>
+            <div className="relative group flex justify-center w-full">
+              <button
+                type="button"
+                title="Atajos de teclado"
+                aria-label="Atajos de teclado"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-sidebar-foreground/35 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <Keyboard className="h-3.5 w-3.5" />
+              </button>
+              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-slate-900/95 text-white text-[11px] font-mono whitespace-nowrap shadow-xl border border-white/15 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+                Alt+Q: Buscar · Alt+V: Ventas
+              </div>
             </div>
           </div>
         ) : (
