@@ -78,11 +78,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-white stroke-[2.2]"
+                  className="h-4.5 w-4.5 text-white stroke-[2.2]"
                 >
-                  <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.8" />
-                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
-                  <circle cx="12" cy="12" r="1.5" fill="#34d399" />
+                  <path d="M5 19V5L15 19V5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="19" cy="5" r="2.2" fill="#10b981" />
                 </svg>
               )}
             </div>
@@ -97,7 +96,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
             </div>
           </div>
         ) : (
-          /* Emblema circular estilo cápsula dock (referencia Imagen 1) */
+          /* Emblema circular estilo cápsula dock (Logo oficial de Nova ERP) */
           <div className="relative group flex justify-center w-full">
             <button
               type="button"
@@ -118,11 +117,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                   viewBox="0 0 24 24"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-white stroke-[2.2] transition-transform duration-300 group-hover/btn:rotate-45"
+                  className="h-5 w-5 text-white stroke-[2.2] transition-transform duration-200 group-hover/btn:scale-110"
                 >
-                  <circle cx="12" cy="12" r="8.5" stroke="currentColor" strokeWidth="1.8" />
-                  <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
-                  <circle cx="12" cy="12" r="1.5" fill="#34d399" />
+                  <path d="M5 19V5L15 19V5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                  <circle cx="19" cy="5" r="2.2" fill="#10b981" />
                 </svg>
               )}
             </button>
