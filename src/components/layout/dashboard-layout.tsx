@@ -100,7 +100,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       </aside>
 
       {/* Área Principal de Contenido con estética de panel flotante integrado */}
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0 lg:my-3 lg:mr-3 lg:h-[calc(100dvh-1.5rem)] lg:rounded-3xl lg:border lg:border-border/70 lg:bg-background/95 lg:shadow-xs">
+      <div className="flex flex-1 flex-col overflow-hidden min-w-0 lg:my-3 lg:mr-3 lg:h-[calc(100dvh-1.5rem)] lg:rounded-3xl lg:border lg:border-dashed lg:border-border/80 dark:lg:border-white/[0.10] lg:bg-background/95 lg:shadow-xs">
         <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
           <div className="mx-auto max-w-[1600px] w-full">{children}</div>

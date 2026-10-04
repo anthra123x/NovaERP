@@ -113,8 +113,8 @@ export function PaymentDonut({
     }
 
   return (
-    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-2xs">
-      <CardHeader className="pb-3 border-b border-border/60">
+    <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card h-full flex flex-col rounded-2xl shadow-2xs">
+      <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <SectionHeader
             icon={Banknote}
@@ -130,7 +130,7 @@ export function PaymentDonut({
                 </span>
               </div>
               {creditReceivables > 0 && (
-                <div className="border-l border-border pl-3">
+                <div className="border-l border-dashed border-border pl-3">
                   <span className="text-[10px] uppercase font-mono text-muted-foreground block">Cartera / Crédito</span>
                   <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">
                     {formatCurrency(creditReceivables)}
@@ -149,10 +149,10 @@ export function PaymentDonut({
           </div>
         ) : (
           <div className="space-y-4">
-            <div className="border border-border/70 rounded-xl overflow-x-auto">
+            <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
               <table className="w-full text-left border-collapse text-xs min-w-[460px] sm:min-w-0">
                 <thead>
-                  <tr className="bg-muted/40 border-b border-border/60 text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
+                  <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
                     <th className="py-2 px-3">Cuenta / Canal</th>
                     <th className="py-2 px-3 text-center">Operaciones</th>
                     <th className="py-2 px-3 text-right">Ticket Prom.</th>
@@ -160,7 +160,7 @@ export function PaymentDonut({
                     <th className="py-2 px-3 text-right w-24">Participación</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border/40 font-normal">
+                <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-normal">
                   {chartData.map((d) => {
                     const percent = totalRevenue > 0 ? Math.round((d.amount / totalRevenue) * 100) : 0
                     const avgTicket = d.count > 0 ? Math.round(d.amount / d.count) : 0
@@ -233,8 +233,8 @@ export function SalesMonthlyBar({ data }: { data: { month: string; total: number
   const totalPeriod = data.reduce((sum, d) => sum + d.total, 0)
 
   return (
-    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-2xs">
-      <CardHeader className="pb-3 border-b border-border/60">
+    <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card h-full flex flex-col rounded-2xl shadow-2xs">
+      <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
         <div className="flex items-center justify-between">
           <SectionHeader
             icon={TrendingUp}
@@ -297,8 +297,8 @@ export function TopProductsBar({ data }: { data: TopProductData[] }) {
   const totalUnitsTop = topFive.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-2xs">
-      <CardHeader className="pb-3 border-b border-border/60">
+    <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card h-full flex flex-col rounded-2xl shadow-2xs">
+      <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <SectionHeader
             icon={TrendingUp}
@@ -322,10 +322,10 @@ export function TopProductsBar({ data }: { data: TopProductData[] }) {
             <p>No hay ventas registradas en los últimos 30 días</p>
           </div>
         ) : (
-          <div className="border border-border/70 rounded-xl overflow-x-auto">
+          <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs min-w-[500px] sm:min-w-0">
               <thead>
-                <tr className="bg-muted/40 border-b border-border/60 text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
+                <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
                   <th className="py-2 px-3 w-10 text-center">#</th>
                   <th className="py-2 px-3">Producto / Referencia</th>
                   <th className="py-2 px-3 text-center">Volumen</th>
@@ -334,7 +334,7 @@ export function TopProductsBar({ data }: { data: TopProductData[] }) {
                   <th className="py-2 px-3 text-right w-24">Contribución</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/40 font-normal">
+              <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-normal">
                 {topFive.map((item, index) => {
                   const percentOfTop = totalRevenueTop > 0 ? Math.round((item.total / totalRevenueTop) * 100) : 0
                   const avgPrice = item.quantity > 0 ? Math.round(item.total / item.quantity) : 0
@@ -342,7 +342,7 @@ export function TopProductsBar({ data }: { data: TopProductData[] }) {
                   return (
                     <tr key={item.productId || index} className="hover:bg-muted/30 transition-colors">
                       <td className="py-2.5 px-3 text-center font-mono text-xs font-bold text-muted-foreground">
-                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-muted border border-border/80 text-[10px]">
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-muted border border-dashed border-border/80 text-[10px]">
                           {index + 1}
                         </span>
                       </td>
@@ -387,8 +387,8 @@ export function LowStockList({
   data: { id: string; name: string; stock: number; lowStockThreshold: number; salePrice?: number }[]
 }) {
   return (
-    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-2xs">
-      <CardHeader className="pb-3 border-b border-border/60">
+    <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card h-full flex flex-col rounded-2xl shadow-2xs">
+      <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
         <SectionHeader
           icon={ShoppingCart}
           title="Reposición de Stock"
@@ -402,7 +402,7 @@ export function LowStockList({
             <p>Todos los productos cuentan con existencias óptimas</p>
           </div>
         ) : (
-          <div className="divide-y divide-border/60">
+          <div className="divide-y divide-dashed divide-border/60 dark:divide-white/[0.08]">
             {data.slice(0, 5).map((p) => {
               const isOut = p.stock <= 0
               return (
@@ -417,10 +417,10 @@ export function LowStockList({
                   </div>
                   <div className="text-right shrink-0">
                     <span
-                      className={`inline-block px-2.5 py-0.5 font-mono text-[11px] font-bold rounded-lg border ${
+                      className={`inline-block px-2.5 py-0.5 font-mono text-[11px] font-bold rounded-lg border border-dashed ${
                         isOut
-                          ? 'bg-destructive/15 text-destructive border-destructive/30'
-                          : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30'
+                          ? 'bg-destructive/15 text-destructive border-destructive/40'
+                          : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/40'
                       }`}
                     >
                       {isOut ? 'AGOTADO (0)' : `${p.stock} uds`}

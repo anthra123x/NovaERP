@@ -58,7 +58,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
       {/* Header superior: h-16 alineado con el Header principal */}
       <div
         className={cn(
-          'flex h-16 items-center border-b border-white/[0.08] shrink-0 transition-all duration-200',
+          'flex h-16 items-center border-b border-dashed border-white/[0.10] shrink-0 transition-all duration-200',
           collapsed ? 'justify-center px-1' : 'justify-between px-3.5',
         )}
       >
@@ -231,7 +231,12 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
         })}
 
         {/* Separador y enlace de Administración */}
-        <div className={cn('border-t border-white/[0.08] pt-2 mt-2 w-full', collapsed && 'flex justify-center')}>
+        <div
+          className={cn(
+            'border-t border-dashed border-white/[0.10] pt-2 mt-2 w-full',
+            collapsed && 'flex justify-center',
+          )}
+        >
           {collapsed ? (
             <div className="relative group flex justify-center w-full">
               <Link
@@ -289,7 +294,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
       </nav>
 
       {/* Pie de la barra lateral: atajos y toggle */}
-      <div className="border-t border-white/[0.08] p-2 shrink-0">
+      <div className="border-t border-dashed border-white/[0.10] p-2 shrink-0">
         {collapsed ? (
           <div className="flex flex-col items-center gap-1.5">
             <div className="relative group flex justify-center w-full">

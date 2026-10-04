@@ -75,7 +75,7 @@ const miniColorMap = {
 
 export function MiniStatCard({ icon: Icon, label, value, color = 'info' }: MiniStatCardProps) {
   return (
-    <div className="bg-muted/30 rounded-lg p-4">
+    <div className="bg-muted/30 border border-dashed border-border/80 dark:border-white/[0.10] rounded-xl p-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
         <Icon className="h-4 w-4" />
         {label}

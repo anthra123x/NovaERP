@@ -65,13 +65,13 @@ export default function DashboardPage() {
 
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-28 bg-card rounded-2xl border border-border/80 p-4" />
+            <div key={i} className="h-28 bg-card rounded-2xl border border-dashed border-border/80 p-4" />
           ))}
         </div>
 
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <div className="h-64 bg-card rounded-2xl border border-border/80" />
-          <div className="h-64 bg-card rounded-2xl border border-border/80" />
+          <div className="h-64 bg-card rounded-2xl border border-dashed border-border/80" />
+          <div className="h-64 bg-card rounded-2xl border border-dashed border-border/80" />
         </div>
       </div>
     )
@@ -176,11 +176,11 @@ export default function DashboardPage() {
       {/* 2. Grid de 6 KPIs Estratégicos (Datos Reales 100% Funcionales) */}
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {/* KPI 1: Facturación Hoy */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-primary/40 transition-all">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ventas Hoy</span>
-              <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+              <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-dashed border-primary/30">
                 <ShoppingCart className="h-4 w-4" />
               </div>
             </div>
@@ -199,11 +199,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 2: Recaudo Efectivo en Caja */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-emerald-500/40 transition-all">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Caja Hoy</span>
-              <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-dashed border-emerald-500/30">
                 <Wallet className="h-4 w-4" />
               </div>
             </div>
@@ -217,11 +217,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 3: Margen y Ganancia Estimada */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-teal-500/40 transition-all">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Utilidad Hoy</span>
-              <div className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+              <div className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-dashed border-teal-500/30">
                 <TrendingUp className="h-4 w-4" />
               </div>
             </div>
@@ -238,13 +238,13 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 4: Cartera por Cobrar */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-sky-500/40 transition-all">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 Cartera Crédito
               </span>
-              <div className="p-1.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+              <div className="p-1.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-dashed border-sky-500/30">
                 <HandCoins className="h-4 w-4" />
               </div>
             </div>
@@ -263,17 +263,17 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 5: Pedidos Web */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-amber-500/40 transition-all">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                 Tienda Online
               </span>
               <div
-                className={`p-1.5 rounded-xl border ${
+                className={`p-1.5 rounded-xl border border-dashed ${
                   hasPendingOrders
-                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                    : 'bg-muted text-muted-foreground border-border'
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40'
+                    : 'bg-muted text-muted-foreground border-border/70'
                 }`}
               >
                 <ShoppingBag className="h-4 w-4" />
@@ -295,15 +295,15 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 6: Catálogo & Stock Crítico */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-destructive/40 transition-all">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Inventario</span>
               <div
-                className={`p-1.5 rounded-xl border ${
+                className={`p-1.5 rounded-xl border border-dashed ${
                   hasOutOfStock || hasLowStock
-                    ? 'bg-destructive/15 text-destructive border-destructive/30'
-                    : 'bg-primary/10 text-primary border-primary/20'
+                    ? 'bg-destructive/15 text-destructive border-destructive/40'
+                    : 'bg-primary/10 text-primary border-primary/30'
                 }`}
               >
                 <Package className="h-4 w-4" />
@@ -342,15 +342,15 @@ export default function DashboardPage() {
       {/* 5. Fila Operativa: Pedidos Web y Ventas Recientes */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Tarjeta de Pedidos Web Pendientes */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs">
-          <CardHeader className="pb-3 border-b border-border/60">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
+          <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div
-                  className={`p-2 rounded-xl border ${
+                  className={`p-2 rounded-xl border border-dashed ${
                     hasPendingOrders
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
-                      : 'bg-muted text-muted-foreground border-border'
+                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40'
+                      : 'bg-muted text-muted-foreground border-border/70'
                   }`}
                 >
                   <ShoppingBag className="h-4 w-4" />
@@ -380,7 +380,7 @@ export default function DashboardPage() {
                 <p>No hay pedidos pendientes de confirmación.</p>
               </div>
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-dashed divide-border/60 dark:divide-white/[0.08]">
                 {webOrdersSummary.pendingOrders.map((order) => (
                   <div
                     key={order.id}
@@ -424,11 +424,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* Tarjeta de Ventas Recientes con buscador */}
-        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs">
-          <CardHeader className="pb-3 border-b border-border/60">
+        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
+          <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-dashed border-primary/30">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
@@ -465,7 +465,7 @@ export default function DashboardPage() {
                 No hay ventas registradas que coincidan con la búsqueda.
               </div>
             ) : (
-              <div className="divide-y divide-border/60">
+              <div className="divide-y divide-dashed divide-border/60 dark:divide-white/[0.08]">
                 {filteredSales.slice(0, 7).map((sale) => (
                   <div
                     key={sale.id}

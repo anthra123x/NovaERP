@@ -124,8 +124,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
 
     // Protección anti-autofill: Solo abrir resultados si el usuario está enfocado activamente en el input
-    const isInputFocused =
-      typeof document !== 'undefined' && document.activeElement === searchInputRef.current
+    const isInputFocused = typeof document !== 'undefined' && document.activeElement === searchInputRef.current
     if (!isInputFocused) {
       setOpen(false)
       return
@@ -190,7 +189,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'A'
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border/80 bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
+    <header className="flex h-16 items-center justify-between border-b border-dashed border-border/70 dark:border-white/[0.08] bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
       {/* Lado Izquierdo: Menú móvil y Barra de búsqueda global */}
       <div className="flex items-center gap-2.5 sm:gap-3 flex-1 max-w-xl min-w-0">
         <Button
