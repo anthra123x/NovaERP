@@ -3,23 +3,22 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  ShoppingCart,
   TrendingUp,
   ShoppingBag,
   Package,
   AlertTriangle,
-  ArrowRight,
   HandCoins,
   PlusCircle,
-  Clock,
-  Phone,
   Wallet,
   RefreshCw,
   Search,
   Eye,
   FileSpreadsheet,
+  Users,
+  ArrowUpRight,
+  CheckCircle2,
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { EmptyState } from '@/components/ui/empty-state'
@@ -54,24 +53,16 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="flex justify-between items-center">
-          <div className="h-8 w-64 bg-muted rounded-xl" />
-          <div className="flex gap-2">
-            <div className="h-9 w-28 bg-muted rounded-xl" />
-            <div className="h-9 w-32 bg-muted rounded-xl" />
-          </div>
-        </div>
-
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="h-28 bg-card rounded-2xl border border-dashed border-border/80 p-4" />
+      <div className="space-y-4 animate-pulse">
+        <div className="h-10 bg-card rounded-xl border border-dashed border-border/80" />
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="h-24 bg-card rounded-xl border border-dashed border-border/80 p-3" />
           ))}
         </div>
-
-        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-          <div className="h-64 bg-card rounded-2xl border border-dashed border-border/80" />
-          <div className="h-64 bg-card rounded-2xl border border-dashed border-border/80" />
+        <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+          <div className="h-64 bg-card rounded-xl border border-dashed border-border/80" />
+          <div className="h-64 bg-card rounded-xl border border-dashed border-border/80" />
         </div>
       </div>
     )
@@ -82,9 +73,9 @@ export default function DashboardPage() {
       <div className="py-12">
         <EmptyState
           icon={AlertTriangle}
-          title="Error al cargar el Dashboard"
-          description="No se pudo obtener el estado operativo actual. Por favor verifica tu conexión y recarga."
-          action={{ label: 'Recargar Datos', onClick: () => loadData(true) }}
+          title="Error de Conexión"
+          description="No se pudieron sincronizar las métricas operativas."
+          action={{ label: 'Recalcular', onClick: () => loadData(true) }}
         />
       </div>
     )
@@ -92,17 +83,29 @@ export default function DashboardPage() {
 
   const {
     salesToday,
+    salesThisMonth,
     incomeToday,
     pendingCreditTotal,
     pendingCreditClientsCount,
     webOrdersSummary,
     inventorySummary,
+    clientStats,
     recentSales,
   } = data
 
   const hasPendingOrders = webOrdersSummary.pendingCount > 0
   const hasLowStock = inventorySummary.lowStockCount > 0
   const hasOutOfStock = inventorySummary.outOfStockCount > 0
+
+  // Métricas derivadas de hoja de cálculo
+  const cashLiquidityRate =
+    salesToday.total > 0 ? Math.min(100, Math.round((incomeToday / salesToday.total) * 100)) : 100
+
+  // Distribución del inventario en 3 segmentos: OK, Bajo, Agotado
+  const totalItems = inventorySummary.totalProducts || 1
+  const outOfStockPct = Math.round((inventorySummary.outOfStockCount / totalItems) * 100)
+  const lowStockPct = Math.round((inventorySummary.lowStockCount / totalItems) * 100)
+  const healthyStockPct = Math.max(0, 100 - outOfStockPct - lowStockPct)
 
   const filteredSales = recentSales.filter((s) => {
     if (!searchSale.trim()) return true
@@ -115,57 +118,55 @@ export default function DashboardPage() {
   })
 
   return (
-    <div className="space-y-6">
-      {/* 1. Header Operativo y Acciones Rápidas */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Dashboard Operativo & Comercial
-            </h1>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 rounded-md font-mono">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              EN VIVO
-            </span>
+    <div className="space-y-4">
+      {/* 1. Barra de Control / Cinta de Hoja de Cálculo (Formula Ribbon Header) */}
+      <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 shadow-2xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
+        <div className="flex items-center gap-2 overflow-x-auto">
+          <span className="font-mono text-[11px] font-bold px-2 py-1 rounded bg-muted border border-dashed border-border/70 text-foreground shrink-0">
+            SHEET: DASHBOARD_OPERATIVO
+          </span>
+          <div className="h-4 w-px bg-border/60 shrink-0 hidden sm:block" />
+          <div className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground shrink-0">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400">SYNC_EN_VIVO</span>
+            <span>&bull;</span>
+            <span>{new Date().toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}</span>
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Métricas consolidadas de ventas, recaudo en caja, catálogo e integración e-commerce
-          </p>
         </div>
 
-        {/* Acciones directas y funcionales */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Acciones Rápidas de Barra de Fórmulas */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="h-8.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground shadow-2xs"
-            title="Refrescar datos"
+            className="h-7 px-2.5 rounded-lg text-[11px] font-mono border-dashed shadow-none"
+            title="Recalcular métricas"
           >
-            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
-            Refrescar
+            <RefreshCw className={`h-3 w-3 mr-1 ${refreshing ? 'animate-spin' : ''}`} />
+            Recalcular
           </Button>
 
           <Button
             render={<Link href="/sales" />}
             size="sm"
-            className="h-8.5 rounded-xl px-3 text-xs font-semibold bg-gray-950 text-white dark:bg-white dark:text-gray-950 hover:bg-black shadow-2xs"
+            className="h-7 px-2.5 rounded-lg text-[11px] font-mono bg-foreground text-background hover:opacity-90 shadow-none font-bold"
           >
-            <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
-            Nueva Venta
+            <PlusCircle className="h-3 w-3 mr-1" />
+            + Venta Directa
           </Button>
 
           <Button
-            render={<Link href="/web/orders" className="relative" />}
+            render={<Link href="/web/orders" />}
             variant="outline"
             size="sm"
-            className="h-8.5 rounded-xl px-3 text-xs font-medium shadow-2xs"
+            className="h-7 px-2.5 rounded-lg text-[11px] font-mono border-dashed shadow-none relative"
           >
-            <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+            <ShoppingBag className="h-3 w-3 mr-1" />
             Pedidos Web
             {hasPendingOrders && (
-              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold font-mono">
+              <span className="ml-1.5 px-1 py-0.2 rounded bg-destructive text-destructive-foreground text-[9px] font-bold">
                 {webOrdersSummary.pendingCount}
               </span>
             )}
@@ -173,350 +174,376 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 2. Grid de 6 KPIs Estratégicos (Datos Reales 100% Funcionales) */}
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {/* KPI 1: Facturación Hoy */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-primary/40 transition-all">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ventas Hoy</span>
-              <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-dashed border-primary/30">
-                <ShoppingCart className="h-4 w-4" />
-              </div>
+      {/* 2. Matriz de Celdas Métricas estilo Hoja de Cálculo (A1..H1) */}
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+        {/* Celda A1: Ventas Hoy */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-primary/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[A1] VENTAS HOY</span>
+            <span className="font-bold text-foreground">{salesToday.count} ops</span>
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-foreground tracking-tight">
+              {formatCurrency(salesToday.total)}
             </div>
-            <div>
-              <div className="text-xl font-bold tracking-tight text-foreground font-mono">
-                {formatCurrency(salesToday.total)}
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
-                <span>
-                  {salesToday.count} {salesToday.count === 1 ? 'venta' : 'ventas'}
-                </span>
-                <span className="font-mono">Prom: {formatCurrency(salesToday.averageTicket)}</span>
-              </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>Ticket Prom.</span>
+              <span className="font-bold text-foreground">{formatCurrency(salesToday.averageTicket)}</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: salesToday.count > 0 ? '100%' : '0%' }} />
+            </div>
+          </div>
+        </div>
 
-        {/* KPI 2: Recaudo Efectivo en Caja */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-emerald-500/40 transition-all">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Caja Hoy</span>
-              <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-dashed border-emerald-500/30">
-                <Wallet className="h-4 w-4" />
-              </div>
+        {/* Celda B1: Recaudo Efectivo */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[B1] RECAUDO CAJA</span>
+            <Wallet className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
+              {formatCurrency(incomeToday)}
             </div>
-            <div>
-              <div className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
-                {formatCurrency(incomeToday)}
-              </div>
-              <p className="text-[11px] text-muted-foreground mt-1">Contado + abonos recibidos</p>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>Liquidez Inmed.</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">{cashLiquidityRate}%</span>
             </div>
-          </CardContent>
-        </Card>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500" style={{ width: `${cashLiquidityRate}%` }} />
+            </div>
+          </div>
+        </div>
 
-        {/* KPI 3: Margen y Ganancia Estimada */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-teal-500/40 transition-all">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Utilidad Hoy</span>
-              <div className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-dashed border-teal-500/30">
-                <TrendingUp className="h-4 w-4" />
-              </div>
+        {/* Celda C1: Utilidad Neta */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-teal-500/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[C1] UTILIDAD</span>
+            <TrendingUp className="h-3 w-3 text-teal-600 dark:text-teal-400" />
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-teal-600 dark:text-teal-400 tracking-tight">
+              {formatCurrency(salesToday.profit)}
             </div>
-            <div>
-              <div className="text-xl font-bold tracking-tight text-teal-600 dark:text-teal-400 font-mono">
-                {formatCurrency(salesToday.profit)}
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
-                <span>Margen est.</span>
-                <span className="font-semibold text-foreground font-mono">{salesToday.profitMarginPercent}%</span>
-              </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>Margen Neto</span>
+              <span className="font-bold text-foreground">{salesToday.profitMarginPercent}%</span>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* KPI 4: Cartera por Cobrar */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-sky-500/40 transition-all">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Cartera Crédito
-              </span>
-              <div className="p-1.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-dashed border-sky-500/30">
-                <HandCoins className="h-4 w-4" />
-              </div>
-            </div>
-            <div>
-              <div className="text-xl font-bold tracking-tight text-sky-600 dark:text-sky-400 font-mono">
-                {formatCurrency(pendingCreditTotal)}
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
-                <span>{pendingCreditClientsCount} clientes</span>
-                <Link href="/credits" className="text-primary hover:underline font-semibold">
-                  Cobrar
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* KPI 5: Pedidos Web */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-amber-500/40 transition-all">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Tienda Online
-              </span>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
               <div
-                className={`p-1.5 rounded-xl border border-dashed ${
-                  hasPendingOrders
-                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40'
-                    : 'bg-muted text-muted-foreground border-border/70'
-                }`}
-              >
-                <ShoppingBag className="h-4 w-4" />
-              </div>
+                className="h-full bg-teal-500"
+                style={{ width: `${Math.min(100, Math.max(0, salesToday.profitMarginPercent))}%` }}
+              />
             </div>
-            <div>
-              <div className="text-xl font-bold tracking-tight font-mono flex items-center gap-1.5">
-                <span>{webOrdersSummary.pendingCount}</span>
-                <span className="text-xs font-normal text-muted-foreground">pendientes</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
-                <span>{formatCurrency(webOrdersSummary.pendingOrdersTotal)}</span>
-                <Link href="/web/orders" className="text-primary hover:underline font-semibold">
-                  Ver
-                </Link>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
-        {/* KPI 6: Catálogo & Stock Crítico */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs hover:shadow-sm hover:border-destructive/40 transition-all">
-          <CardContent className="p-3.5 space-y-1.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Inventario</span>
+        {/* Celda D1: Cartera CxC */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-sky-500/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[D1] CARTERA CXC</span>
+            <HandCoins className="h-3 w-3 text-sky-600 dark:text-sky-400" />
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-sky-600 dark:text-sky-400 tracking-tight">
+              {formatCurrency(pendingCreditTotal)}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>{pendingCreditClientsCount} deudores</span>
+              <Link href="/credits" className="font-bold text-primary hover:underline">
+                Cobrar &rarr;
+              </Link>
+            </div>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-sky-500" style={{ width: pendingCreditTotal > 0 ? '100%' : '0%' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Celda E1: Acumulado Mes (MTD) */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-primary/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[E1] ACUM. MES (MTD)</span>
+            <span className="font-bold text-foreground">{salesThisMonth.count} ops</span>
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-foreground tracking-tight">
+              {formatCurrency(salesThisMonth.total)}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>Mes en curso</span>
+              <span className="font-bold text-foreground">
+                {salesThisMonth.count > 0 ? formatCurrency(Math.round(salesThisMonth.total / salesThisMonth.count)) : '$0'}
+              </span>
+            </div>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-indigo-500" style={{ width: '100%' }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Celda F1: Tienda Online */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-amber-500/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[F1] TIENDA ONLINE</span>
+            <ShoppingBag className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 tracking-tight flex items-center justify-between">
+              <span>{webOrdersSummary.pendingCount} pend.</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>En reserva</span>
+              <span className="font-bold text-foreground">{formatCurrency(webOrdersSummary.pendingOrdersTotal)}</span>
+            </div>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
               <div
-                className={`p-1.5 rounded-xl border border-dashed ${
-                  hasOutOfStock || hasLowStock
-                    ? 'bg-destructive/15 text-destructive border-destructive/40'
-                    : 'bg-primary/10 text-primary border-primary/30'
-                }`}
-              >
-                <Package className="h-4 w-4" />
-              </div>
+                className="h-full bg-amber-500"
+                style={{ width: hasPendingOrders ? '100%' : '0%' }}
+              />
             </div>
-            <div>
-              <div className="text-xl font-bold tracking-tight font-mono text-foreground">
-                {formatNumber(inventorySummary.totalProducts)}
-                <span className="text-xs font-normal text-muted-foreground ml-1">ítems</span>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
-                <span className={hasOutOfStock ? 'text-destructive font-semibold' : ''}>
-                  {inventorySummary.outOfStockCount} agotados
-                </span>
-                <Link href="/inventory" className="text-primary hover:underline font-semibold">
-                  Revisar
-                </Link>
-              </div>
+          </div>
+        </div>
+
+        {/* Celda G1: Salud Inventario */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-destructive/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[G1] SALUD CATÁLOGO</span>
+            <Package className="h-3 w-3 text-muted-foreground" />
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-foreground tracking-tight">
+              {formatNumber(inventorySummary.totalProducts)} <span className="text-[11px] font-normal text-muted-foreground">ítems</span>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+          <div className="space-y-1">
+            {/* Visual Component: 3-Segment Stock Health Bar */}
+            <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden flex border border-dashed border-border/60">
+              <div style={{ width: `${healthyStockPct}%` }} className="h-full bg-emerald-500" title={`Óptimo: ${healthyStockPct}%`} />
+              <div style={{ width: `${lowStockPct}%` }} className="h-full bg-amber-500" title={`Bajo Stock: ${lowStockPct}%`} />
+              <div style={{ width: `${outOfStockPct}%` }} className="h-full bg-destructive" title={`Agotados: ${outOfStockPct}%`} />
+            </div>
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span className={hasOutOfStock ? 'text-destructive font-bold' : ''}>{inventorySummary.outOfStockCount} agot.</span>
+              <span className={hasLowStock ? 'text-amber-600 font-bold' : ''}>{inventorySummary.lowStockCount} bajo</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Celda H1: Base Clientes */}
+        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-primary/50 transition-colors">
+          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+            <span>[H1] CLIENTELA</span>
+            <Users className="h-3 w-3 text-muted-foreground" />
+          </div>
+          <div className="my-1.5">
+            <div className="text-base sm:text-lg font-bold font-mono text-foreground tracking-tight">
+              {formatNumber(clientStats.totalClients)} <span className="text-[11px] font-normal text-muted-foreground">reg.</span>
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+              <span>Nuevos MTD</span>
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">+{clientStats.newClientsThisMonth}</span>
+            </div>
+            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+              <div className="h-full bg-teal-500" style={{ width: '100%' }} />
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* 3. Fila de Gráficos Principales: Facturación Mensual y Tesorería */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      {/* 3. Módulos de Análisis Métrico Visual: Facturación y Tesorería */}
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
         <SalesMonthlyBar data={data.salesByMonth || []} />
         <PaymentDonut data={data.salesByPayment || []} />
       </div>
 
-      {/* 4. Fila Secundaria: Top Productos y Reposición de Stock */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+      {/* 4. Módulos Secundarios: Pareto de Rotación y Semáforo de Abastecimiento */}
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
         <TopProductsBar data={data.topProducts || []} />
         <LowStockList data={inventorySummary.lowStockProducts || []} />
       </div>
 
-      {/* 5. Fila Operativa: Pedidos Web y Ventas Recientes */}
-      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-        {/* Tarjeta de Pedidos Web Pendientes */}
+      {/* 5. Celdas Operativas / Libros Diarios tipo Hoja de Cálculo */}
+      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
+        {/* Libro Diario de Pedidos Web */}
         <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
-          <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
+          <CardHeader className="py-2.5 px-3.5 border-b border-dashed border-border/60 dark:border-white/[0.08]">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div
-                  className={`p-2 rounded-xl border border-dashed ${
-                    hasPendingOrders
-                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40'
-                      : 'bg-muted text-muted-foreground border-border/70'
-                  }`}
-                >
-                  <ShoppingBag className="h-4 w-4" />
-                </div>
-                <div>
-                  <CardTitle className="text-sm font-semibold">Pedidos Tienda Online</CardTitle>
-                  <CardDescription className="text-xs">
-                    {hasPendingOrders
-                      ? `${webOrdersSummary.pendingCount} órdenes esperando confirmación y despacho`
-                      : 'Todos los pedidos web han sido atendidos'}
-                  </CardDescription>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-dashed border-border/70 text-muted-foreground">
+                  QUEUE.01
+                </span>
+                <h3 className="text-xs font-bold tracking-tight text-foreground uppercase">
+                  Pedidos Tienda Online // Cola de Despacho
+                </h3>
               </div>
-              <Button
-                render={<Link href="/web/orders" />}
-                variant="ghost"
-                size="sm"
-                className="text-xs text-primary rounded-xl"
+              <Link
+                href="/web/orders"
+                className="font-mono text-[10px] text-primary hover:underline font-bold inline-flex items-center gap-1"
               >
-                Gestionar <ArrowRight className="h-3 w-3 ml-1" />
-              </Button>
+                Gestionar <ArrowUpRight className="h-3 w-3" />
+              </Link>
             </div>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="p-3">
             {webOrdersSummary.pendingOrders.length === 0 ? (
-              <div className="py-8 text-center text-xs text-muted-foreground">
-                <p>No hay pedidos pendientes de confirmación.</p>
+              <div className="py-6 text-center text-xs font-mono text-muted-foreground flex flex-col items-center">
+                <CheckCircle2 className="h-6 w-6 text-emerald-500/50 mb-1" />
+                <span>COLA_DE_PEDIDOS_AL_DIA</span>
               </div>
             ) : (
-              <div className="divide-y divide-dashed divide-border/60 dark:divide-white/[0.08]">
-                {webOrdersSummary.pendingOrders.map((order) => (
-                  <div
-                    key={order.id}
-                    className="py-2.5 px-1.5 rounded-xl hover:bg-muted/40 transition-colors flex items-center justify-between gap-3"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-bold text-foreground">{order.reference || 'ORD'}</span>
-                        <span className="text-xs font-medium text-foreground truncate">{order.customerName}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                        <Phone className="h-3 w-3" />
-                        <span>{order.customerPhone}</span>
-                        <span>·</span>
-                        <span className="font-mono">
+              <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-mono">
+                      <th className="py-1.5 px-2.5">Ref</th>
+                      <th className="py-1.5 px-2">Cliente</th>
+                      <th className="py-1.5 px-2 text-center">Hora</th>
+                      <th className="py-1.5 px-2.5 text-right">Total</th>
+                      <th className="py-1.5 px-2 text-center w-16">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-mono text-[11px]">
+                    {webOrdersSummary.pendingOrders.map((order) => (
+                      <tr key={order.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-1.5 px-2.5 font-bold text-foreground">
+                          {order.reference || 'ORD'}
+                        </td>
+                        <td className="py-1.5 px-2 font-sans font-medium text-foreground truncate max-w-[120px]">
+                          {order.customerName}
+                        </td>
+                        <td className="py-1.5 px-2 text-center text-muted-foreground">
                           {new Date(order.createdAt).toLocaleTimeString([], {
                             hour: '2-digit',
                             minute: '2-digit',
                           })}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <div className="font-mono font-semibold text-xs text-foreground">
-                        {formatCurrency(order.total)}
-                      </div>
-                      <Button
-                        render={<Link href="/web/orders" />}
-                        size="sm"
-                        variant="outline"
-                        className="h-6 text-[10px] px-2 mt-1 rounded-lg"
-                      >
-                        Atender
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                        </td>
+                        <td className="py-1.5 px-2.5 text-right font-bold text-foreground">
+                          {formatCurrency(order.total)}
+                        </td>
+                        <td className="py-1.5 px-2 text-center">
+                          <Button
+                            render={<Link href="/web/orders" />}
+                            size="sm"
+                            variant="outline"
+                            className="h-5 text-[9px] px-1.5 rounded border-dashed"
+                          >
+                            Atender
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Tarjeta de Ventas Recientes con buscador */}
+        {/* Libro Diario de Ventas Recientes con Buscador */}
         <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
-          <CardHeader className="pb-3 border-b border-dashed border-border/60 dark:border-white/[0.08]">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-dashed border-primary/30">
-                  <Clock className="h-4 w-4" />
-                </div>
-                <div>
-                  <CardTitle className="text-sm font-semibold">Últimas Ventas Registradas</CardTitle>
-                  <CardDescription className="text-xs">Movimientos recientes en mostrador y web</CardDescription>
-                </div>
+          <CardHeader className="py-2.5 px-3.5 border-b border-dashed border-border/60 dark:border-white/[0.08]">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-dashed border-border/70 text-muted-foreground">
+                  LEDGER.01
+                </span>
+                <h3 className="text-xs font-bold tracking-tight text-foreground uppercase">
+                  Libro Diario // Últimas Operaciones
+                </h3>
               </div>
 
               <div className="flex items-center gap-2">
-                <div className="relative w-40 sm:w-48">
-                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                <div className="relative w-32 sm:w-40">
+                  <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground/60" />
                   <Input
                     type="search"
-                    placeholder="Filtrar ventas..."
+                    placeholder="Filtrar..."
                     value={searchSale}
                     onChange={(e) => setSearchSale(e.target.value)}
-                    className="h-8 pl-8 pr-2 text-xs rounded-xl bg-muted/40 border-border/70"
+                    className="h-6.5 pl-6 pr-2 text-[10px] font-mono rounded-lg bg-muted/40 border-dashed"
                   />
                 </div>
-                <Button
-                  render={<Link href="/sales" />}
-                  variant="ghost"
-                  size="sm"
-                  className="text-xs text-primary rounded-xl shrink-0"
+                <Link
+                  href="/sales"
+                  className="font-mono text-[10px] text-primary hover:underline font-bold inline-flex items-center gap-1"
                 >
-                  Historial <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
+                  Historial <ArrowUpRight className="h-3 w-3" />
+                </Link>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="pt-2">
+          <CardContent className="p-3">
             {filteredSales.length === 0 ? (
-              <div className="text-center py-8 text-xs text-muted-foreground">
-                No hay ventas registradas que coincidan con la búsqueda.
+              <div className="py-6 text-center text-xs font-mono text-muted-foreground">
+                SIN_OPERACIONES_REGISTRADAS
               </div>
             ) : (
-              <div className="divide-y divide-dashed divide-border/60 dark:divide-white/[0.08]">
-                {filteredSales.slice(0, 7).map((sale) => (
-                  <div
-                    key={sale.id}
-                    className="py-2.5 px-2 rounded-xl flex items-center justify-between hover:bg-muted/40 transition-colors group"
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/sales/${sale.id}`}
-                          className="font-mono text-xs font-bold text-foreground hover:underline"
-                        >
-                          {sale.invoiceNumber}
-                        </Link>
-                        <span className="text-xs font-medium text-foreground truncate">
-                          {sale.client?.name || 'Cliente general'}
-                        </span>
-                      </div>
-                      <div className="text-[11px] text-muted-foreground mt-0.5">
-                        <span className="font-medium text-foreground/80">
-                          {getPaymentMethodLabel(sale.paymentMethod)}
-                        </span>
-                        {' · '}
-                        {new Date(sale.saleDate).toLocaleDateString([], {
-                          day: '2-digit',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span className="font-mono font-bold text-sm text-foreground">{formatCurrency(sale.total)}</span>
-                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <Link
-                          href={`/sales/${sale.id}`}
-                          title="Ver detalle"
-                          className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                        >
-                          <Eye className="h-3.5 w-3.5" />
-                        </Link>
-                        <Link
-                          href={`/sales/${sale.id}/invoice`}
-                          title="Factura PDF"
-                          className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
-                        >
-                          <FileSpreadsheet className="h-3.5 w-3.5" />
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
+                <table className="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-mono">
+                      <th className="py-1.5 px-2.5">Factura</th>
+                      <th className="py-1.5 px-2">Cliente</th>
+                      <th className="py-1.5 px-2 text-center">Canal</th>
+                      <th className="py-1.5 px-2.5 text-right">Total</th>
+                      <th className="py-1.5 px-2 text-center w-12">Doc</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-mono text-[11px]">
+                    {filteredSales.slice(0, 6).map((sale) => (
+                      <tr key={sale.id} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-1.5 px-2.5 font-bold text-foreground">
+                          <Link href={`/sales/${sale.id}`} className="hover:underline">
+                            {sale.invoiceNumber}
+                          </Link>
+                        </td>
+                        <td className="py-1.5 px-2 font-sans font-medium text-foreground truncate max-w-[120px]">
+                          {sale.client?.name || 'Mostrador'}
+                        </td>
+                        <td className="py-1.5 px-2 text-center text-muted-foreground">
+                          <span className="text-[10px]">{getPaymentMethodLabel(sale.paymentMethod)}</span>
+                        </td>
+                        <td className="py-1.5 px-2.5 text-right font-bold text-foreground">
+                          {formatCurrency(sale.total)}
+                        </td>
+                        <td className="py-1.5 px-2 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Link
+                              href={`/sales/${sale.id}`}
+                              title="Ver detalle"
+                              className="p-1 rounded text-muted-foreground hover:text-foreground"
+                            >
+                              <Eye className="h-3 w-3" />
+                            </Link>
+                            <Link
+                              href={`/sales/${sale.id}/invoice`}
+                              title="PDF"
+                              className="p-1 rounded text-muted-foreground hover:text-foreground"
+                            >
+                              <FileSpreadsheet className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
           </CardContent>
