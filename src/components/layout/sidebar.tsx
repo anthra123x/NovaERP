@@ -52,7 +52,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-card/95 dark:bg-card/95 text-foreground select-none rounded-3xl border border-dashed border-border/80 dark:border-white/[0.10] shadow-sm backdrop-blur-xl overflow-visible transition-all duration-300">
+    <div className="flex h-full w-full flex-col bg-card/95 dark:bg-card/95 text-foreground select-none rounded-3xl border border-dashed border-border/80 dark:border-white/[0.10] shadow-sm backdrop-blur-xl overflow-visible transition-all duration-300 no-scrollbar">
       {/* Header superior: h-16 alineado con el Header principal */}
       <div
         className={cn(
@@ -162,8 +162,10 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
       {/* Navegación de módulos principales */}
       <nav
         className={cn(
-          'flex-1 overflow-y-auto overflow-x-visible py-3',
-          collapsed ? 'px-2 space-y-2 flex flex-col items-center' : 'px-3 space-y-1',
+          'flex-1 py-3 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+          collapsed
+            ? 'px-2 space-y-2 flex flex-col items-center overflow-visible'
+            : 'px-3 space-y-1 overflow-y-auto overflow-x-hidden',
         )}
       >
         {navigation.map((item) => {
