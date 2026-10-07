@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
   TrendingUp,
-  ShoppingBag,
+  Receipt,
   Package,
   AlertTriangle,
   HandCoins,
@@ -16,7 +16,6 @@ import {
   FileSpreadsheet,
   Users,
   ArrowUpRight,
-  CheckCircle2,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -87,13 +86,11 @@ export default function DashboardPage() {
     incomeToday,
     pendingCreditTotal,
     pendingCreditClientsCount,
-    webOrdersSummary,
     inventorySummary,
     clientStats,
     recentSales,
   } = data
 
-  const hasPendingOrders = webOrdersSummary.pendingCount > 0
   const hasLowStock = inventorySummary.lowStockCount > 0
   const hasOutOfStock = inventorySummary.outOfStockCount > 0
 
@@ -155,21 +152,6 @@ export default function DashboardPage() {
           >
             <PlusCircle className="h-3 w-3 mr-1" />
             + Venta Directa
-          </Button>
-
-          <Button
-            render={<Link href="/web/orders" />}
-            variant="outline"
-            size="sm"
-            className="h-7 px-2.5 rounded-lg text-[11px] font-mono border-dashed shadow-none relative"
-          >
-            <ShoppingBag className="h-3 w-3 mr-1" />
-            Pedidos Web
-            {hasPendingOrders && (
-              <span className="ml-1.5 px-1 py-0.2 rounded bg-destructive text-destructive-foreground text-[9px] font-bold">
-                {webOrdersSummary.pendingCount}
-              </span>
-            )}
           </Button>
         </div>
       </div>
@@ -293,26 +275,26 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Celda F1: Tienda Online */}
+        {/* Celda F1: Ticket Promedio */}
         <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-amber-500/50 transition-colors">
           <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-            <span>[F1] TIENDA ONLINE</span>
-            <ShoppingBag className="h-3 w-3 text-amber-600 dark:text-amber-400" />
+            <span>[F1] TICKET PROM.</span>
+            <Receipt className="h-3 w-3 text-amber-600 dark:text-amber-400" />
           </div>
           <div className="my-1.5">
-            <div className="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 tracking-tight flex items-center justify-between">
-              <span>{webOrdersSummary.pendingCount} pend.</span>
+            <div className="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 tracking-tight">
+              {formatCurrency(salesToday.averageTicket)}
             </div>
           </div>
           <div className="space-y-1">
             <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
-              <span>En reserva</span>
-              <span className="font-bold text-foreground">{formatCurrency(webOrdersSummary.pendingOrdersTotal)}</span>
+              <span>Por transacción</span>
+              <span className="font-bold text-foreground">{salesToday.count} ops</span>
             </div>
             <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
               <div
                 className="h-full bg-amber-500"
-                style={{ width: hasPendingOrders ? '100%' : '0%' }}
+                style={{ width: salesToday.count > 0 ? '100%' : '0%' }}
               />
             </div>
           </div>
@@ -378,177 +360,110 @@ export default function DashboardPage() {
         <LowStockList data={inventorySummary.lowStockProducts || []} />
       </div>
 
-      {/* 5. Celdas Operativas / Libros Diarios tipo Hoja de Cálculo */}
-      <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
-        {/* Libro Diario de Pedidos Web */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
-          <CardHeader className="py-2.5 px-3.5 border-b border-dashed border-border/60 dark:border-white/[0.08]">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-dashed border-border/70 text-muted-foreground">
-                  QUEUE.01
-                </span>
-                <h3 className="text-xs font-bold tracking-tight text-foreground uppercase">
-                  Pedidos Tienda Online // Cola de Despacho
-                </h3>
+      {/* 5. Celda Operativa / Libro Diario de Ventas tipo Hoja de Cálculo (Ancho Completo) */}
+      <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
+        <CardHeader className="py-2.5 px-3.5 border-b border-dashed border-border/60 dark:border-white/[0.08]">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-dashed border-border/70 text-muted-foreground">
+                LEDGER.01
+              </span>
+              <h3 className="text-xs font-bold tracking-tight text-foreground uppercase">
+                Libro Diario // Últimas Operaciones Registradas
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative w-36 sm:w-48">
+                <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground/60" />
+                <Input
+                  type="search"
+                  placeholder="Filtrar ventas..."
+                  value={searchSale}
+                  onChange={(e) => setSearchSale(e.target.value)}
+                  className="h-6.5 pl-6 pr-2 text-[10px] font-mono rounded-lg bg-muted/40 border-dashed"
+                />
               </div>
               <Link
-                href="/web/orders"
-                className="font-mono text-[10px] text-primary hover:underline font-bold inline-flex items-center gap-1"
+                href="/sales"
+                className="font-mono text-[10px] text-primary hover:underline font-bold inline-flex items-center gap-1 shrink-0"
               >
-                Gestionar <ArrowUpRight className="h-3 w-3" />
+                Historial completo <ArrowUpRight className="h-3 w-3" />
               </Link>
             </div>
-          </CardHeader>
-          <CardContent className="p-3">
-            {webOrdersSummary.pendingOrders.length === 0 ? (
-              <div className="py-6 text-center text-xs font-mono text-muted-foreground flex flex-col items-center">
-                <CheckCircle2 className="h-6 w-6 text-emerald-500/50 mb-1" />
-                <span>COLA_DE_PEDIDOS_AL_DIA</span>
-              </div>
-            ) : (
-              <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-mono">
-                      <th className="py-1.5 px-2.5">Ref</th>
-                      <th className="py-1.5 px-2">Cliente</th>
-                      <th className="py-1.5 px-2 text-center">Hora</th>
-                      <th className="py-1.5 px-2.5 text-right">Total</th>
-                      <th className="py-1.5 px-2 text-center w-16">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-mono text-[11px]">
-                    {webOrdersSummary.pendingOrders.map((order) => (
-                      <tr key={order.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-1.5 px-2.5 font-bold text-foreground">
-                          {order.reference || 'ORD'}
-                        </td>
-                        <td className="py-1.5 px-2 font-sans font-medium text-foreground truncate max-w-[120px]">
-                          {order.customerName}
-                        </td>
-                        <td className="py-1.5 px-2 text-center text-muted-foreground">
-                          {new Date(order.createdAt).toLocaleTimeString([], {
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </td>
-                        <td className="py-1.5 px-2.5 text-right font-bold text-foreground">
-                          {formatCurrency(order.total)}
-                        </td>
-                        <td className="py-1.5 px-2 text-center">
-                          <Button
-                            render={<Link href="/web/orders" />}
-                            size="sm"
-                            variant="outline"
-                            className="h-5 text-[9px] px-1.5 rounded border-dashed"
-                          >
-                            Atender
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Libro Diario de Ventas Recientes con Buscador */}
-        <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">
-          <CardHeader className="py-2.5 px-3.5 border-b border-dashed border-border/60 dark:border-white/[0.08]">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-muted border border-dashed border-border/70 text-muted-foreground">
-                  LEDGER.01
-                </span>
-                <h3 className="text-xs font-bold tracking-tight text-foreground uppercase">
-                  Libro Diario // Últimas Operaciones
-                </h3>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <div className="relative w-32 sm:w-40">
-                  <Search className="absolute left-2 top-1/2 h-3 w-3 -translate-y-1/2 text-muted-foreground/60" />
-                  <Input
-                    type="search"
-                    placeholder="Filtrar..."
-                    value={searchSale}
-                    onChange={(e) => setSearchSale(e.target.value)}
-                    className="h-6.5 pl-6 pr-2 text-[10px] font-mono rounded-lg bg-muted/40 border-dashed"
-                  />
-                </div>
-                <Link
-                  href="/sales"
-                  className="font-mono text-[10px] text-primary hover:underline font-bold inline-flex items-center gap-1"
-                >
-                  Historial <ArrowUpRight className="h-3 w-3" />
-                </Link>
-              </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-3">
+          {filteredSales.length === 0 ? (
+            <div className="py-8 text-center text-xs font-mono text-muted-foreground">
+              SIN_OPERACIONES_REGISTRADAS
             </div>
-          </CardHeader>
-          <CardContent className="p-3">
-            {filteredSales.length === 0 ? (
-              <div className="py-6 text-center text-xs font-mono text-muted-foreground">
-                SIN_OPERACIONES_REGISTRADAS
-              </div>
-            ) : (
-              <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-mono">
-                      <th className="py-1.5 px-2.5">Factura</th>
-                      <th className="py-1.5 px-2">Cliente</th>
-                      <th className="py-1.5 px-2 text-center">Canal</th>
-                      <th className="py-1.5 px-2.5 text-right">Total</th>
-                      <th className="py-1.5 px-2 text-center w-12">Doc</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-mono text-[11px]">
-                    {filteredSales.slice(0, 6).map((sale) => (
-                      <tr key={sale.id} className="hover:bg-muted/30 transition-colors">
-                        <td className="py-1.5 px-2.5 font-bold text-foreground">
-                          <Link href={`/sales/${sale.id}`} className="hover:underline">
-                            {sale.invoiceNumber}
+          ) : (
+            <div className="border border-dashed border-border/70 dark:border-white/[0.08] rounded-xl overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-dashed border-border/60 dark:border-white/[0.08] text-muted-foreground uppercase text-[10px] font-mono">
+                    <th className="py-2 px-3">Comprobante</th>
+                    <th className="py-2 px-3">Cliente</th>
+                    <th className="py-2 px-3 text-center">Canal de Pago</th>
+                    <th className="py-2 px-3 text-center">Fecha / Hora</th>
+                    <th className="py-2 px-3 text-right">Total Facturado</th>
+                    <th className="py-2 px-3 text-center w-16">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-dashed divide-border/40 dark:divide-white/[0.06] font-mono text-[11px]">
+                  {filteredSales.slice(0, 8).map((sale) => (
+                    <tr key={sale.id} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2 px-3 font-bold text-foreground">
+                        <Link href={`/sales/${sale.id}`} className="hover:underline">
+                          {sale.invoiceNumber}
+                        </Link>
+                      </td>
+                      <td className="py-2 px-3 font-sans font-medium text-foreground truncate max-w-[180px]">
+                        {sale.client?.name || 'Cliente general'}
+                      </td>
+                      <td className="py-2 px-3 text-center text-muted-foreground">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted/60 border border-dashed border-border/60">
+                          {getPaymentMethodLabel(sale.paymentMethod)}
+                        </span>
+                      </td>
+                      <td className="py-2 px-3 text-center text-muted-foreground">
+                        {new Date(sale.saleDate).toLocaleDateString([], {
+                          day: '2-digit',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </td>
+                      <td className="py-2 px-3 text-right font-bold text-foreground">
+                        {formatCurrency(sale.total)}
+                      </td>
+                      <td className="py-2 px-3 text-center">
+                        <div className="flex items-center justify-center gap-1.5">
+                          <Link
+                            href={`/sales/${sale.id}`}
+                            title="Ver detalle"
+                            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
                           </Link>
-                        </td>
-                        <td className="py-1.5 px-2 font-sans font-medium text-foreground truncate max-w-[120px]">
-                          {sale.client?.name || 'Mostrador'}
-                        </td>
-                        <td className="py-1.5 px-2 text-center text-muted-foreground">
-                          <span className="text-[10px]">{getPaymentMethodLabel(sale.paymentMethod)}</span>
-                        </td>
-                        <td className="py-1.5 px-2.5 text-right font-bold text-foreground">
-                          {formatCurrency(sale.total)}
-                        </td>
-                        <td className="py-1.5 px-2 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            <Link
-                              href={`/sales/${sale.id}`}
-                              title="Ver detalle"
-                              className="p-1 rounded text-muted-foreground hover:text-foreground"
-                            >
-                              <Eye className="h-3 w-3" />
-                            </Link>
-                            <Link
-                              href={`/sales/${sale.id}/invoice`}
-                              title="PDF"
-                              className="p-1 rounded text-muted-foreground hover:text-foreground"
-                            >
-                              <FileSpreadsheet className="h-3 w-3" />
-                            </Link>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                          <Link
+                            href={`/sales/${sale.id}/invoice`}
+                            title="Factura PDF"
+                            className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            <FileSpreadsheet className="h-3.5 w-3.5" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }
