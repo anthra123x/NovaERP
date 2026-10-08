@@ -19,14 +19,20 @@ import type { BusinessWorkflowConfig } from '@/lib/business-workflow'
 
 const UpdateSettingsSchema = z.object({
   companyName: z.string().min(1, 'Razón social o nombre comercial requerido'),
-  companyNit: z.string().optional().default(''),
-  companyAddress: z.string().optional().default(''),
-  companyCity: z.string().optional().default(''),
-  companyPhone: z.string().optional().default(''),
-  companyEmail: z.string().email('Email inválido').optional().or(z.literal('')),
+  companyNit: z.string().nullable().optional().default(''),
+  companyAddress: z.string().nullable().optional().default(''),
+  companyCity: z.string().nullable().optional().default(''),
+  companyPhone: z.string().nullable().optional().default(''),
+  companyEmail: z
+    .string()
+    .email('Email inválido')
+    .nullable()
+    .optional()
+    .or(z.literal(''))
+    .or(z.null()),
   currency: z.enum(['COP', 'USD', 'EUR', 'MXN', 'PEN', 'CLP', 'ARS']).default('COP'),
   invoicePrefix: z.string().min(1, 'Prefijo de facturación requerido').default('FAC-'),
-  invoiceFooter: z.string().optional().default(''),
+  invoiceFooter: z.string().nullable().optional().default(''),
   lowStockThreshold: z.coerce.number().int().min(0).default(5),
   nextInvoiceNumber: z.coerce.number().int().min(1).default(1),
   nextWebOrderNumber: z.coerce.number().int().min(1).default(1000),
@@ -43,14 +49,14 @@ export async function updateSystemSettings(formData: FormData): Promise<ActionRe
 
   const raw = {
     companyName: getString(formData, 'companyName') || '',
-    companyNit: getString(formData, 'companyNit'),
-    companyAddress: getString(formData, 'companyAddress'),
-    companyCity: getString(formData, 'companyCity'),
-    companyPhone: getString(formData, 'companyPhone'),
-    companyEmail: getString(formData, 'companyEmail'),
+    companyNit: getString(formData, 'companyNit') ?? '',
+    companyAddress: getString(formData, 'companyAddress') ?? '',
+    companyCity: getString(formData, 'companyCity') ?? '',
+    companyPhone: getString(formData, 'companyPhone') ?? '',
+    companyEmail: getString(formData, 'companyEmail') ?? '',
     currency: getString(formData, 'currency') || 'COP',
     invoicePrefix: getString(formData, 'invoicePrefix') || 'FAC-',
-    invoiceFooter: getString(formData, 'invoiceFooter'),
+    invoiceFooter: getString(formData, 'invoiceFooter') ?? '',
     lowStockThreshold: Number(getString(formData, 'lowStockThreshold') || 5),
     nextInvoiceNumber: Number(getString(formData, 'nextInvoiceNumber') || 1),
     nextWebOrderNumber: Number(getString(formData, 'nextWebOrderNumber') || 1000),
