@@ -159,7 +159,7 @@ export function ProductForm({
         },
   })
 
-  const { workflow } = useBusinessWorkflow()
+  const { workflow, profile } = useBusinessWorkflow()
   const watchedCost = Number(watch('costPrice') ?? 0) || 0
   const watchedSale = Number(watch('salePrice') ?? 0) || 0
   const marginPercent =
@@ -206,8 +206,8 @@ export function ProductForm({
           description: result.error,
         })
       } else {
-        toast.success('Producto guardado exitosamente', {
-          description: product ? 'Los cambios se han guardado' : 'El producto ha sido creado',
+        toast.success(`${profile.labels.singular} guardado exitosamente`, {
+          description: product ? 'Los cambios se han guardado' : `${profile.labels.singular} creado correctamente`,
         })
         if (redirectTo) {
           router.push(redirectTo)
@@ -227,31 +227,43 @@ export function ProductForm({
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>{product ? 'Editar Producto' : 'Nuevo Producto'}</CardTitle>
-        <CardDescription>
-          {product ? 'Actualiza los datos del producto' : 'Completa los datos del nuevo producto'}
-        </CardDescription>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <CardTitle>{product ? `Editar ${profile.labels.singular}` : profile.labels.actionNew}</CardTitle>
+            <CardDescription>
+              {product
+                ? `Actualiza los datos del ${profile.labels.singular.toLowerCase()}`
+                : `Completa los datos del nuevo ${profile.labels.singular.toLowerCase()}`}
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground self-start sm:self-auto px-2 py-1 bg-muted/60 rounded-md border border-dashed border-border/80">
+            <span className="font-bold text-foreground">SECTOR:</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-bold">{profile.tag}</span>
+            <span>&bull;</span>
+            <span>{profile.title}</span>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre *</Label>
+              <Label htmlFor="name">Nombre del {profile.labels.singular.toLowerCase()} *</Label>
               <Input
                 id="name"
                 {...register('name')}
-                placeholder="Ej: Cable USB Tipo C"
+                placeholder={`Nombre del ${profile.labels.singular.toLowerCase()}...`}
                 disabled={isSubmitting || isLoading}
               />
               {errors.name && <p className="text-sm text-red-500">{errors.name.message?.toString()}</p>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="barcode">Código de barras (opcional)</Label>
+              <Label htmlFor="barcode">{profile.labels.identifier} (opcional)</Label>
               <Input
                 id="barcode"
                 {...register('barcode')}
-                placeholder="Código de barras"
+                placeholder={profile.labels.identifierPlaceholder}
                 disabled={isSubmitting || isLoading}
               />
             </div>
@@ -262,7 +274,7 @@ export function ProductForm({
             <Textarea
               id="description"
               {...register('description')}
-              placeholder="Descripción del producto..."
+              placeholder={`Descripción detallada del ${profile.labels.singular.toLowerCase()}...`}
               disabled={isSubmitting || isLoading}
             />
           </div>
@@ -389,7 +401,7 @@ export function ProductForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="stock">Stock *</Label>
+              <Label htmlFor="stock">Stock inicial ({profile.labels.unit}) *</Label>
               <Input
                 id="stock"
                 type="number"
@@ -438,7 +450,7 @@ export function ProductForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="lowStockThreshold">Alerta stock bajo</Label>
+              <Label htmlFor="lowStockThreshold">Alerta stock bajo ({profile.labels.unit})</Label>
               <Input
                 id="lowStockThreshold"
                 type="number"
@@ -454,7 +466,11 @@ export function ProductForm({
 
           <div className="flex gap-2">
             <Button type="submit" disabled={isSubmitting || isLoading}>
-              {isSubmitting ? 'Guardando...' : product ? 'Actualizar' : 'Crear'}
+              {isSubmitting
+                ? 'Guardando...'
+                : product
+                  ? `Actualizar ${profile.labels.singular}`
+                  : `Crear ${profile.labels.singular}`}
             </Button>
           </div>
         </form>

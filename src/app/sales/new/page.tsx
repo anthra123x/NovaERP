@@ -62,7 +62,7 @@ interface ProductOption {
 
 export default function NewSalePage() {
   const router = useRouter()
-  const { workflow } = useBusinessWorkflow()
+  const { workflow, profile } = useBusinessWorkflow()
   const [cart, setCart] = useState<CartItem[]>([])
   const [search, setSearch] = useState('')
   const [products, setProducts] = useState<ProductOption[]>([])
@@ -361,8 +361,8 @@ export default function NewSalePage() {
   return (
     <div className="page-container py-6 space-y-6">
       <PageHeader
-        title="Nueva Venta"
-        description="Registra una venta y genera su factura"
+        title={`${profile.labels.primaryAction || 'Nueva Venta'} [${profile.tag}]`}
+        description={`Registra una operación comercial de ${profile.labels.plural.toLowerCase()}`}
         actions={
           <Link href="/sales">
             <Button variant="outline">
@@ -378,9 +378,14 @@ export default function NewSalePage() {
         <div className="lg:col-span-2 space-y-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Search className="h-5 w-5" />
-                Productos
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Search className="h-5 w-5" />
+                  {profile.labels.plural}
+                </span>
+                <span className="text-[10px] font-mono text-muted-foreground px-2 py-0.5 bg-muted/60 rounded border border-dashed border-border/80 font-semibold">
+                  SECTOR: {profile.tag}
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -396,7 +401,7 @@ export default function NewSalePage() {
                         const q = search.trim().toLowerCase()
                         const exactBarcode = products.find((p) => p.barcode?.toLowerCase() === q)
                         if (exactBarcode) {
-                          addToCart(exactBarcode)
+                           addToCart(exactBarcode)
                           return
                         }
                         const exactName = products.find((p) => p.name.toLowerCase() === q)
@@ -412,8 +417,8 @@ export default function NewSalePage() {
                   }}
                   placeholder={
                     workflow.barcodeContinuousScan
-                      ? 'Escanear código de barras o presionar Enter para agregar...'
-                      : 'Buscar producto del inventario...'
+                      ? `Escanear ${profile.labels.identifier.toLowerCase()} o escribir nombre...`
+                      : profile.labels.searchPlaceholder
                   }
                   className="pl-9"
                 />

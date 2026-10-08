@@ -24,6 +24,7 @@ import { Pagination } from '@/components/ui/pagination'
 import { formatCurrency } from '@/lib/format'
 import { toast } from 'sonner'
 import { getProducts, deleteProduct } from '@/modules/inventory/inventory.actions'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
 interface Product {
   id: string
@@ -43,6 +44,7 @@ interface Product {
 }
 
 export default function InventoryPage() {
+  const { profile } = useBusinessWorkflow()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -131,13 +133,13 @@ export default function InventoryPage() {
   return (
     <div className="page-container py-6 space-y-6">
       <PageHeader
-        title="Inventario"
-        description="Gestión de productos"
+        title={profile.labels.plural}
+        description={`Catálogo y control de existencias de ${profile.labels.plural.toLowerCase()} [${profile.tag}]`}
         actions={
           <Link href="/inventory/new">
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              Nuevo Producto
+              {profile.labels.actionNew}
             </Button>
           </Link>
         }
@@ -147,7 +149,11 @@ export default function InventoryPage() {
         <CardHeader className="pb-4">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1">
-              <SearchInput value={search} onChange={setSearch} placeholder="Buscar productos..." />
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder={`Buscar ${profile.labels.plural.toLowerCase()}...`}
+              />
             </div>
           </div>
         </CardHeader>
@@ -156,12 +162,12 @@ export default function InventoryPage() {
             <Table className="min-w-[680px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
-                  <TableHead>Producto</TableHead>
+                  <TableHead>{profile.labels.singular}</TableHead>
                   <TableHead>Categoría</TableHead>
                   <TableHead>Proveedor</TableHead>
                   <TableHead className="text-right">Costo</TableHead>
                   <TableHead className="text-right">Precio</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
+                  <TableHead className="text-right">Stock ({profile.labels.unit})</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -250,11 +256,13 @@ export default function InventoryPage() {
           {products.length === 0 && (
             <EmptyState
               icon={Package}
-              title={search ? 'Sin resultados' : 'Sin productos'}
+              title={search ? 'Sin resultados' : `Sin ${profile.labels.plural.toLowerCase()}`}
               description={
-                search ? 'No hay productos que coincidan con tu búsqueda' : 'Crea tu primer producto para comenzar'
+                search
+                  ? `No hay ${profile.labels.plural.toLowerCase()} que coincidan con tu búsqueda`
+                  : `Crea tu primer ${profile.labels.singular.toLowerCase()} para comenzar`
               }
-              action={search ? undefined : { label: 'Crear producto', href: '/inventory/new' }}
+              action={search ? undefined : { label: profile.labels.actionNew, href: '/inventory/new' }}
             />
           )}
 

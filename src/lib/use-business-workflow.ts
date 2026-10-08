@@ -5,7 +5,9 @@ import {
   DEFAULT_BUSINESS_WORKFLOW,
   WORKFLOW_CHANGED_EVENT,
   getBusinessWorkflow,
+  getSectorProfile,
   type BusinessWorkflowConfig,
+  type SectorProfile,
 } from './business-workflow'
 
 /**
@@ -44,6 +46,7 @@ export function useBusinessWorkflow() {
   }, [])
 
   const safeWorkflow = workflow || DEFAULT_BUSINESS_WORKFLOW
+  const profile: SectorProfile = getSectorProfile(safeWorkflow.sector)
 
-  return { workflow: safeWorkflow, config: safeWorkflow, isLoaded: true }
+  return { workflow: safeWorkflow, config: safeWorkflow, profile, isLoaded: true }
 }

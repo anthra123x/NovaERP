@@ -38,7 +38,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
-  const { config: workflow } = useBusinessWorkflow()
+  const { config: workflow, profile } = useBusinessWorkflow()
 
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -87,10 +87,16 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
               <span className="truncate text-xs font-bold text-foreground tracking-tight uppercase">
                 {workflow.companyName || 'Nova ERP'}
               </span>
-              <span className="truncate text-[10px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 font-mono">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                {workflow.slogan ? workflow.slogan : 'Sistema Activo'}
-              </span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="truncate text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 font-mono">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  {profile.tag}
+                </span>
+                <span className="text-[9px] text-muted-foreground/50 font-mono">&bull;</span>
+                <span className="truncate text-[10px] text-muted-foreground font-mono">
+                  {workflow.slogan ? workflow.slogan : 'Sistema Activo'}
+                </span>
+              </div>
             </div>
           </div>
         ) : (
@@ -123,7 +129,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
               )}
             </button>
             <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-dashed border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
-              {workflow.companyName || 'Nova ERP'} &bull; Click para expandir
+              {workflow.companyName || 'Nova ERP'} &bull; [{profile.tag}] &bull; Click para expandir
             </div>
           </div>
         )}

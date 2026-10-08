@@ -26,8 +26,11 @@ import { getPaymentMethodLabel } from '@/lib/labels'
 import { getDashboardStats } from '@/modules/dashboard/dashboard.actions'
 import type { DashboardOverview } from '@/modules/dashboard/dashboard.service'
 import { PaymentDonut, SalesMonthlyBar, TopProductsBar, LowStockList } from './charts'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
+import { BusinessInsights } from './business-insights'
 
 export default function DashboardPage() {
+  const { profile } = useBusinessWorkflow()
   const [data, setData] = useState<DashboardOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -126,6 +129,10 @@ export default function DashboardPage() {
           <div className="flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground shrink-0">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="font-semibold text-emerald-600 dark:text-emerald-400">SYNC_EN_VIVO</span>
+            <span>&bull;</span>
+            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-bold border border-dashed border-primary/30">
+              SECTOR: {profile.tag}
+            </span>
             <span>&bull;</span>
             <span>{new Date().toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}</span>
           </div>
@@ -308,7 +315,8 @@ export default function DashboardPage() {
           </div>
           <div className="my-1.5">
             <div className="text-base sm:text-lg font-bold font-mono text-foreground tracking-tight">
-              {formatNumber(inventorySummary.totalProducts)} <span className="text-[11px] font-normal text-muted-foreground">ítems</span>
+              {formatNumber(inventorySummary.totalProducts)}{' '}
+              <span className="text-[11px] font-normal text-muted-foreground">{profile.labels.unit}</span>
             </div>
           </div>
           <div className="space-y-1">
@@ -328,7 +336,7 @@ export default function DashboardPage() {
         {/* Celda H1: Base Clientes */}
         <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-primary/50 transition-colors">
           <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-            <span>[H1] CLIENTELA</span>
+            <span>[H1] {profile.labels.clientRole.toUpperCase()}S</span>
             <Users className="h-3 w-3 text-muted-foreground" />
           </div>
           <div className="my-1.5">
@@ -347,6 +355,9 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* 2.5. Diagnósticos Proactivos e Insights Cognitivos (Copiloto AI) */}
+      <BusinessInsights data={data} profile={profile} />
 
       {/* 3. Módulos de Análisis Métrico Visual: Facturación y Tesorería */}
       <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">
