@@ -59,6 +59,7 @@ import {
   updateSystemSettings,
   getBusinessWorkflowAction,
   saveBusinessWorkflowAction,
+  autoConfigureBusinessWithAiAction,
 } from '@/modules/settings/settings.actions'
 import {
   exportProductsToExcel,
@@ -141,6 +142,9 @@ export default function AdminPage() {
   // Flujos de trabajo e identidad visual del negocio
   const [workflow, setWorkflow] = useState<BusinessWorkflowConfig>(() => getBusinessWorkflow())
   const [logoUploading, setLogoUploading] = useState(false)
+  const [aiPrompt, setAiPrompt] = useState('')
+  const [aiConfiguring, setAiConfiguring] = useState(false)
+  const [aiConfigResult, setAiConfigResult] = useState<string | null>(null)
 
   // 1. Carga inicial y Suscripción WebSocket en Tiempo Real con Supabase
   useEffect(() => {
@@ -345,6 +349,51 @@ export default function AdminPage() {
     toast.info(`Flujo optimizado para: ${info.title}`)
   }
 
+  // 3.1 Adaptar ERP automáticamente mediante IA
+  async function handleAutoConfigureWithAi() {
+    if (!aiPrompt.trim()) {
+      toast.error('Por favor describe tu negocio en el cuadro de texto')
+      return
+    }
+
+    setAiConfiguring(true)
+    setAiConfigResult(null)
+
+    const result = await autoConfigureBusinessWithAiAction(aiPrompt)
+    setAiConfiguring(false)
+
+    if (result.success && result.data) {
+      const data = result.data
+      setWorkflow(data.workflow)
+      saveBusinessWorkflow(data.workflow)
+
+      if (data.workflow.companyName) {
+        setSettings((prev) => ({
+          ...prev,
+          companyName: data.workflow.companyName || prev.companyName,
+          invoiceFooter: SECTOR_INFO[data.sector]?.defaultFooter || prev.invoiceFooter,
+        }))
+      }
+
+      setAiConfigResult(data.explanation)
+      toast.success(`ERP adaptado al sector [${data.sectorTag}] con éxito`)
+
+      try {
+        const supabase = createClientSupabase()
+        const channel = supabase.channel('system-settings-sync')
+        channel.send({
+          type: 'broadcast',
+          event: 'workflow-updated',
+          payload: data.workflow,
+        })
+      } catch {
+        // Fallback silencioso si no hay websockets activos
+      }
+    } else {
+      toast.error(!result.success ? result.error : 'Error configurando el ERP con IA')
+    }
+  }
+
   // 4. Gestión de Usuarios
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault()
@@ -521,6 +570,123 @@ export default function AdminPage() {
         {/* PESTAÑA 1: EMPRESA & IDENTIDAD DEL NEGOCIO */}
         {/* ======================================================== */}
         <TabsContent value="company" className="space-y-6">
+          {/* 0. Copiloto de Autoconfiguración Adaptativa con IA */}
+          <Card className="rounded-3xl border border-dashed border-border/80 dark:border-white/[0.12] bg-card shadow-xs overflow-hidden">
+            <CardHeader className="pb-3 border-b border-dashed border-border/80 dark:border-white/[0.12] bg-muted/20">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <CardTitle className="text-sm font-bold flex items-center gap-2 font-mono tracking-tight">
+                  <span className="px-1.5 py-0.5 rounded text-[10px] bg-primary/10 text-primary border border-primary/20">
+                    [AI.ONBOARDING]
+                  </span>
+                  Adaptación Inteligente del ERP
+                </CardTitle>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  Sector activo: [{workflow.sector ? SECTOR_INFO[workflow.sector]?.tag : 'GENERAL'}]
+                </span>
+              </div>
+              <CardDescription className="text-xs">
+                Escribe libremente a qué se dedica tu negocio. El motor de IA clasificará la industria, ajustará márgenes sugeridos, reglas operativas de venta y asegurará las categorías iniciales de catálogo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4 space-y-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ai-prompt-input" className="text-xs font-mono font-medium text-muted-foreground">
+                  {'// Describe tu actividad o modelo comercial'}
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="ai-prompt-input"
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault()
+                        handleAutoConfigureWithAi()
+                      }
+                    }}
+                    placeholder="Ej: Tengo una ferretería llamada El Martillo, vendemos herramientas, cemento, tornillería y pinturas..."
+                    className="h-10 text-xs font-mono pr-28 rounded-xl border-dashed border-border/80 dark:border-white/[0.12] focus-visible:ring-1"
+                    disabled={aiConfiguring}
+                  />
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAutoConfigureWithAi}
+                    disabled={aiConfiguring || !aiPrompt.trim()}
+                    className="absolute right-1 top-1 h-8 rounded-lg text-xs font-mono gap-1.5 px-3"
+                  >
+                    {aiConfiguring ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Analizando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
+                        <span>Adaptar</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
+              {/* Plantillas rápidas */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-[10px] font-mono text-muted-foreground mr-1">Ejemplos rápidos:</span>
+                {[
+                  {
+                    label: 'Ferretería & Pinturas',
+                    text: 'Ferretería de barrio con venta de herramientas, cemento, tuberías, tornillos y pinturas',
+                  },
+                  {
+                    label: 'Boutique de Ropa',
+                    text: 'Boutique de moda femenina, vestidos de fiesta, blusas, pantalones y calzado',
+                  },
+                  {
+                    label: 'Supermercado',
+                    text: 'Minimarket y abarrotes, víveres, lácteos, bebidas y productos de aseo',
+                  },
+                  {
+                    label: 'Taller de Motos',
+                    text: 'Taller mecánico de motos con venta de repuestos, lubricantes y cambio de aceite',
+                  },
+                  {
+                    label: 'Droguería Farmacia',
+                    text: 'Farmacia y droguería con medicamentos éticos, genéricos y cuidado personal',
+                  },
+                  {
+                    label: 'Servicio Técnico Tech',
+                    text: 'Servicio técnico de celulares y computadores, venta de repuestos y pantallas',
+                  },
+                ].map((chip) => (
+                  <button
+                    key={chip.label}
+                    type="button"
+                    onClick={() => {
+                      setAiPrompt(chip.text)
+                    }}
+                    className="px-2 py-0.5 text-[10px] font-mono rounded-md border border-dashed border-border/70 bg-muted/30 hover:bg-muted/80 text-foreground/80 hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    {chip.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Feedback del resultado */}
+              {aiConfigResult && (
+                <div className="p-3 rounded-xl border border-dashed border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300 text-xs font-mono space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <Check className="h-3.5 w-3.5 text-emerald-500" />
+                    <span>[ADAPTACIÓN COMPLETADA]</span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    {aiConfigResult}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* 1. Selector de Sector Comercial del Negocio */}
           <Card className="rounded-3xl border-border/70 bg-card shadow-xs">
             <CardHeader className="pb-3">

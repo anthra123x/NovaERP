@@ -12,6 +12,8 @@ import {
   updateSettings,
   getBusinessWorkflowConfig,
   updateBusinessWorkflowConfig,
+  autoConfigureBusinessWithAi,
+  type AutoConfigResult,
 } from './settings.service'
 import type { BusinessWorkflowConfig } from '@/lib/business-workflow'
 
@@ -107,6 +109,35 @@ export async function saveBusinessWorkflowAction(
     revalidatePath('/sales/new')
     revalidatePath('/inventory')
   }
+  return result
+}
+
+const AutoConfigSchema = z.object({
+  description: z.string().min(3, 'Describe brevemente la actividad de tu empresa'),
+})
+
+export async function autoConfigureBusinessWithAiAction(
+  description: string,
+): Promise<ActionResult<AutoConfigResult>> {
+  await requireAdmin()
+
+  const parsed = AutoConfigSchema.safeParse({ description })
+  if (!parsed.success) {
+    return failure(parsed.error.issues[0]?.message || 'Descripción inválida')
+  }
+
+  const result = await tryCatch(
+    () => autoConfigureBusinessWithAi(parsed.data.description),
+    { context: 'autoConfigureBusinessWithAiAction' },
+  )
+
+  if (result.success) {
+    revalidatePath('/admin')
+    revalidatePath('/dashboard')
+    revalidatePath('/inventory')
+    revalidatePath('/sales/new')
+  }
+
   return result
 }
 

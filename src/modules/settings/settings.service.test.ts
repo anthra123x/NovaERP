@@ -1,17 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
-const { findFirst, create, update, findUnique, upsert } = vi.hoisted(() => ({
+const { findFirst, create, update, findUnique, upsert, catFindFirst, catCreate } = vi.hoisted(() => ({
   findFirst: vi.fn(),
   create: vi.fn(),
   update: vi.fn(),
   findUnique: vi.fn(),
   upsert: vi.fn(),
+  catFindFirst: vi.fn(),
+  catCreate: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     systemSettings: { findFirst, create, update },
     storeSetting: { findUnique, upsert },
+    productCategory: { findFirst: catFindFirst, create: catCreate },
   },
 }))
 
@@ -20,6 +23,8 @@ import {
   updateSettings,
   getBusinessWorkflowConfig,
   updateBusinessWorkflowConfig,
+  classifyBusinessSector,
+  autoConfigureBusinessWithAi,
 } from './settings.service'
 import { DEFAULT_BUSINESS_WORKFLOW } from '@/lib/business-workflow'
 
@@ -162,4 +167,77 @@ describe('updateBusinessWorkflowConfig', () => {
     })
   })
 })
+
+describe('classifyBusinessSector', () => {
+  it('correctly classifies a tech repair store', () => {
+    const result = classifyBusinessSector('Servicio técnico de celulares, cambio de pantallas y baterías de computadores')
+    expect(result.sector).toBe('technology_repair')
+    expect(result.matches).toContain('celulares')
+    expect(result.matches).toContain('pantallas')
+  })
+
+  it('correctly classifies a fashion boutique', () => {
+    const result = classifyBusinessSector('Tienda de ropa femenina, vestidos elegantes, blusas y calzado de moda')
+    expect(result.sector).toBe('fashion_apparel')
+    expect(result.matches).toContain('ropa')
+    expect(result.matches).toContain('vestidos')
+  })
+
+  it('correctly classifies a hardware store', () => {
+    const result = classifyBusinessSector('Ferretería con venta de cemento, herramientas manuales, tornillos y pinturas')
+    expect(result.sector).toBe('hardware_construction')
+    expect(result.matches).toContain('ferreteria')
+    expect(result.matches).toContain('cemento')
+  })
+
+  it('correctly classifies a pharmacy', () => {
+    const result = classifyBusinessSector('Droguería y farmacia con venta de medicamentos y fórmulas médicas')
+    expect(result.sector).toBe('pharmacy_health')
+    expect(result.matches).toContain('farmacia')
+    expect(result.matches).toContain('medicamentos')
+  })
+
+  it('correctly classifies a workshop', () => {
+    const result = classifyBusinessSector('Taller mecánico para motos, cambio de aceite y mantenimiento preventivo')
+    expect(result.sector).toBe('services_workshop')
+    expect(result.matches).toContain('taller')
+    expect(result.matches).toContain('mecanico')
+  })
+
+  it('defaults to retail_general when no specific industry keywords match', () => {
+    const result = classifyBusinessSector('Empresa comercial de ventas y distribución general')
+    expect(result.sector).toBe('retail_general')
+  })
+})
+
+describe('autoConfigureBusinessWithAi', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    findUnique.mockResolvedValue(null)
+    upsert.mockResolvedValue({ id: 'ws1' })
+    catFindFirst.mockResolvedValue(null)
+    catCreate.mockResolvedValue({ id: 'cat1' })
+    findFirst.mockResolvedValue({ id: 's1', companyName: 'Nova ERP' })
+  })
+
+  it('automatically configures workflow and creates starter categories for detected sector', async () => {
+    const result = await autoConfigureBusinessWithAi('Ferretería El Progreso, venta de herramientas y cemento')
+
+    expect(result.sector).toBe('hardware_construction')
+    expect(result.sectorTag).toBe('FERRETERÍA')
+    expect(result.suggestedMargin).toBe(30)
+    expect(result.categoriesCreated.length).toBeGreaterThan(0)
+    expect(catCreate).toHaveBeenCalled()
+    expect(upsert).toHaveBeenCalledWith({
+      where: { key: 'business_workflow' },
+      create: expect.objectContaining({
+        value: expect.objectContaining({ sector: 'hardware_construction' }),
+      }),
+      update: expect.objectContaining({
+        value: expect.objectContaining({ sector: 'hardware_construction' }),
+      }),
+    })
+  })
+})
+
 

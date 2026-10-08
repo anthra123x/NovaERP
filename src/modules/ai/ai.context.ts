@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { formatCurrency } from '@/lib/format'
+import { getSectorProfile, type BusinessSector, type SectorProfile } from '@/lib/business-workflow'
 
 export interface BusinessSnapshot {
   company: {
@@ -8,6 +9,13 @@ export interface BusinessSnapshot {
     currency: string
     lowStockThreshold: number
     webPendingExpiryHours: number
+  }
+  sector: {
+    key: BusinessSector
+    title: string
+    tag: string
+    suggestedMargin: number
+    labels: SectorProfile['labels']
   }
   salesToday: { count: number; total: number }
   salesThisMonth: { count: number; total: number }
@@ -47,7 +55,7 @@ export function dateDaysAgo(days: number): Date {
 }
 
 export async function collectBusinessData(): Promise<BusinessSnapshot> {
-  const [settings, storeSetting] = await Promise.all([
+  const [settings, storeSetting, workflowSetting] = await Promise.all([
     prisma.systemSettings.findFirst({
       select: {
         companyName: true,
@@ -57,7 +65,23 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
       },
     }),
     prisma.storeSetting.findUnique({ where: { key: 'store' } }),
+    prisma.storeSetting.findUnique({ where: { key: 'business_workflow' } }),
   ])
+
+  const rawWorkflow =
+    workflowSetting && typeof workflowSetting.value === 'object' && workflowSetting.value !== null
+      ? (workflowSetting.value as Record<string, unknown>)
+      : {}
+  const sectorKey = (rawWorkflow.sector as BusinessSector) || 'technology_repair'
+  const sectorProfile = getSectorProfile(sectorKey)
+
+  const sector = {
+    key: sectorKey,
+    title: sectorProfile.title,
+    tag: sectorProfile.tag,
+    suggestedMargin: sectorProfile.suggestedMargin,
+    labels: sectorProfile.labels,
+  }
 
   const company = {
     name: settings?.companyName || 'Cilmax',
@@ -139,6 +163,7 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
 
   return {
     company,
+    sector,
     salesToday: { count: salesTodayRows.length, total: salesTodayTotal },
     salesThisMonth: { count: salesMonthRows.length, total: salesMonthTotal },
     pendingCredit: { total: creditTotal, salesCount: creditRows.length },
@@ -165,9 +190,22 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
 export function businessSnapshotToText(snapshot: BusinessSnapshot): string {
   const cur = snapshot.company.currency
   const format = (n: number) => formatCurrency(n, cur)
+  const sector = snapshot.sector
+  const lbl = sector?.labels ?? {
+    singular: 'Producto',
+    plural: 'Productos',
+    identifier: 'Código / SKU',
+    identifierPlaceholder: 'SKU o Código de barras',
+    unit: 'unidades',
+    clientRole: 'Cliente',
+    actionNew: 'Nuevo Producto',
+    primaryAction: 'Nueva Venta',
+    searchPlaceholder: 'Buscar productos...',
+  }
 
   const lines = [
     `Empresa: ${snapshot.company.name}${snapshot.company.storeName !== snapshot.company.name ? ` | Tienda online: ${snapshot.company.storeName}` : ''}`,
+    sector ? `Sector: [${sector.tag}] ${sector.title} (Margen recomendado: ${sector.suggestedMargin}%)` : '',
     `Fecha de los datos: ${new Date(snapshot.askedAt).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' })}`,
     '',
     'Ventas:',
@@ -175,36 +213,50 @@ export function businessSnapshotToText(snapshot: BusinessSnapshot): string {
     `  • Este mes: ${snapshot.salesThisMonth.count} ventas por ${format(snapshot.salesThisMonth.total)}`,
     `  • Crédito pendiente de cobro: ${format(snapshot.pendingCredit.total)} (${snapshot.pendingCredit.salesCount} ventas a crédito)`,
     '',
-    'Inventario:',
-    `  • ${snapshot.inventory.products} productos activos, ${snapshot.inventory.units} unidades en stock`,
-    `  • ${snapshot.inventory.lowStockCount} productos con stock bajo (umbral <= ${snapshot.company.lowStockThreshold})`,
-    `  • ${snapshot.inventory.outOfStockCount} productos agotados`,
-    '  • Productos con stock bajo (top 10):',
+    `Catálogo e Inventario (${lbl.plural}):`,
+    `  • ${snapshot.inventory.products} ${lbl.plural.toLowerCase()} activos, ${snapshot.inventory.units} ${lbl.unit} en stock`,
+    `  • ${snapshot.inventory.lowStockCount} ${lbl.plural.toLowerCase()} con stock bajo (umbral <= ${snapshot.company.lowStockThreshold})`,
+    `  • ${snapshot.inventory.outOfStockCount} ${lbl.plural.toLowerCase()} agotados`,
+    `  • ${lbl.plural} con stock bajo (top 10):`,
     ...(snapshot.inventory.lowStockTop.length
       ? snapshot.inventory.lowStockTop.map(
-          (p) => `    - ${p.name}: ${p.stock} uds (mín ${p.threshold})${p.category ? ` - ${p.category}` : ''}`,
+          (p) => `    - ${p.name}: ${p.stock} ${lbl.unit} (mín ${p.threshold})${p.category ? ` - ${p.category}` : ''}`,
         )
       : ['    (ninguno)']),
     '',
     'Tienda online:',
     `  • Pedidos: ${snapshot.webOrders.PENDING} pendientes, ${snapshot.webOrders.CONFIRMED} confirmados, ${snapshot.webOrders.CONVERTED} convertidos, ${snapshot.webOrders.CANCELLED} cancelados`,
     `  • Los pedidos pendientes se cancelan automáticamente tras ${snapshot.company.webPendingExpiryHours} horas sin confirmar`,
-    `  • ${snapshot.webVisibleProducts} productos visibles en el catálogo web`,
+    `  • ${snapshot.webVisibleProducts} ${lbl.plural.toLowerCase()} visibles en el catálogo web`,
     '',
-    'Clientes:',
-    `  • ${snapshot.clients.total} clientes registrados, ${snapshot.clients.newThisMonth} nuevos este mes`,
+    `${lbl.clientRole}s:`,
+    `  • ${snapshot.clients.total} ${lbl.clientRole.toLowerCase()}s registrados, ${snapshot.clients.newThisMonth} nuevos este mes`,
     `  • ${snapshot.contactUnread} mensajes de contacto sin leer`,
-  ]
+  ].filter(Boolean)
 
   return lines.join('\n')
 }
 
 export function buildSystemPrompt(snapshot: BusinessSnapshot): string {
   const cur = snapshot.company.currency
+  const sector = snapshot.sector
+  const lbl = sector?.labels ?? {
+    singular: 'Producto',
+    plural: 'Productos',
+    identifier: 'Código / SKU',
+    identifierPlaceholder: 'SKU o Código de barras',
+    unit: 'unidades',
+    clientRole: 'Cliente',
+    actionNew: 'Nuevo Producto',
+    primaryAction: 'Nueva Venta',
+    searchPlaceholder: 'Buscar productos...',
+  }
 
   return [
-    'Eres el asistente virtual del sistema de gestión (ERP) de la empresa, enfocado en el negocio de tecnología y telecomunicaciones.',
-    'Respondes en ESPAÑOL neutro, de forma breve, clara y profesional. Hablas de tú al dueño.',
+    `Eres el copiloto inteligente del ERP Nova para "${snapshot.company.name}"${sector ? `, adaptado al sector [${sector.tag}] (${sector.title})` : ''}.`,
+    `En este negocio, los ítems de catálogo se denominan "${lbl.plural}" (unidad de medida: "${lbl.unit}"), el identificador es "${lbl.identifier}", y los clientes son "${lbl.clientRole}s".`,
+    sector ? `Margen de beneficio objetivo para este sector: ~${sector.suggestedMargin}%. Prioriza recomendaciones que optimicen la rotación y liquidez.` : '',
+    'Respondes en ESPAÑOL neutro, de forma breve, concisa, analítica y ejecutiva (estilo hoja de cálculo). Hablas de tú al dueño.',
     '',
     `Moneda: ${cur}. Todas las cantidades deben expresarse con el formato de moneda local.`,
     '',
@@ -212,7 +264,7 @@ export function buildSystemPrompt(snapshot: BusinessSnapshot): string {
     businessSnapshotToText(snapshot),
     '',
     'Reglas de negocio que debes respetar al responder:',
-    '1. El stock de un producto es la única fuente de verdad; no lo inventes.',
+    `1. El stock de un ${lbl.singular.toLowerCase()} es la única fuente de verdad; no lo inventes.`,
     '2. Una venta solo pesa en ingresos si su estado es completada (COMPLETED).',
     '3. Los productos y clientes eliminados no cuentan en ningún resumen.',
     '4. Los pedidos de la tienda online nacen pendientes (PENDING) y se confirman manualmente; el stock se descuenta al confirmar.',
