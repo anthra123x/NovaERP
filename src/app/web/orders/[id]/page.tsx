@@ -72,42 +72,44 @@ export default async function WebOrderDetailPage({ params }: { params: Promise<{
               </div>
             </CardHeader>
             <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Producto</TableHead>
-                    <TableHead>Cantidad</TableHead>
-                    <TableHead>Precio unitario</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {order.items.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <p className="font-medium">{item.productName}</p>
-                        {item.product?.slug && (
-                          <Link
-                            href={`/web/products/${item.product.id}`}
-                            className="text-xs text-primary hover:underline"
-                          >
-                            /{item.product.slug}
-                          </Link>
-                        )}
-                      </TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
-                      <TableCell className="text-right font-semibold">{formatCurrency(item.total)}</TableCell>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Producto</TableHead>
+                      <TableHead>Cantidad</TableHead>
+                      <TableHead>Precio unitario</TableHead>
+                      <TableHead className="text-right">Total</TableHead>
                     </TableRow>
-                  ))}
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-right text-sm text-muted-foreground">
-                      Total del pedido
-                    </TableCell>
-                    <TableCell className="text-right font-bold">{formatCurrency(order.total)}</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {order.items.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <p className="font-medium">{item.productName}</p>
+                          {item.product?.slug && (
+                            <Link
+                              href={`/web/products/${item.product.id}`}
+                              className="text-xs text-primary hover:underline"
+                            >
+                              /{item.product.slug}
+                            </Link>
+                          )}
+                        </TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>{formatCurrency(item.unitPrice)}</TableCell>
+                        <TableCell className="text-right font-semibold">{formatCurrency(item.total)}</TableCell>
+                      </TableRow>
+                    ))}
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-right text-sm text-muted-foreground">
+                        Total del pedido
+                      </TableCell>
+                      <TableCell className="text-right font-bold">{formatCurrency(order.total)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <WebOrderActions orderId={order.id} status={order.status} />

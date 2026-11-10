@@ -382,10 +382,18 @@
   .animate-slide-in-left,
   .animate-float,
   .animate-float-reverse,
-  .animate-pulse-slow {
+  .animate-pulse-slow,
+  .animate-ambient-glow-1,
+  .animate-ambient-glow-2,
+  .animate-ambient-wander,
+  .animate-ambient-shine,
+  .animate-float-card-1,
+  .animate-float-card-2,
+  .animate-float-card-3 {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+    will-change: auto !important;
   }
 }
 

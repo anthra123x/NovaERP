@@ -258,10 +258,7 @@ describe('createWebOrder', () => {
       id: 's1',
       nextWebOrderNumber: 1000,
     })
-    prismaMockData.transaction.systemSettings.findUniqueOrThrow.mockResolvedValue({
-      id: 's1',
-      nextWebOrderNumber: 1000,
-    })
+    prismaMockData.transaction.$queryRaw.mockResolvedValue([{ num: 1000 }])
 
     const result = await createWebOrder({
       customerName: 'Ana',
@@ -283,10 +280,6 @@ describe('createWebOrder', () => {
         },
       }),
       include: { items: true },
-    })
-    expect(prismaMockData.transaction.systemSettings.update).toHaveBeenCalledWith({
-      where: { id: 's1' },
-      data: { nextWebOrderNumber: 1001 },
     })
   })
 

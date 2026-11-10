@@ -189,9 +189,23 @@ El servidor estará disponible de inmediato en **`http://localhost:3000`**.
 
 El proyecto sigue una arquitectura **monolítica modular por capas** ubicada en `src/modules/`:
 
-- `*.actions.ts`: **Frontera HTTP / Server Actions**. Valida autenticación (`requireAuth()`), valida esquemas con Zod y delega al servicio. **No ejecuta consultas directas a Prisma.**
+- `*.actions.ts`: **Frontera HTTP / Server Actions**. Valida autenticación (`requireAuth()`), valida esquemas con Zod y delega al servicio.
 - `*.service.ts`: **Capa de Negocio y Persistencia**. Contiene transacciones atómicas (`prisma.$transaction`), consultas SQL y lógica contable/inventario.
 - `index.ts`: Punto de exportación público del módulo (barrel).
+
+### Mapa de módulos
+
+| Módulo | Ruta | Responsabilidad | README local |
+|--------|------|-----------------|--------------|
+| Ventas & Cobranzas | `src/modules/sales/` | Registro de ventas POS, facturación correlativa, control de crédito y abonos con bloqueo pesimista | [`src/modules/sales/README.md`](./src/modules/sales/README.md) |
+| Web & Storefront | `src/modules/web/` | Exposición de catálogo headless, pedidos web ORD-XXXX, conversión atómica a ventas POS y moderación | [`src/modules/web/README.md`](./src/modules/web/README.md) |
+| Dashboard & Analítica | `src/modules/dashboard/` | Consolidación de métricas de negocio en tiempo real mediante agregaciones SQL optimizadas | [`src/modules/dashboard/README.md`](./src/modules/dashboard/README.md) |
+| Asistente IA | `src/modules/ai/` | Asistente multi-agente con rotación de cuota, snapshot compacto de negocio y herramientas read-only | [`src/modules/ai/README.md`](./src/modules/ai/README.md) |
+| Autenticación & RBAC | `src/modules/auth/` | Sesiones Supabase SSR, sincronización de usuarios en base de datos y memoización con React.cache | [`src/modules/auth/README.md`](./src/modules/auth/README.md) |
+| Shell y Navegación | `src/components/layout/` | Shell de la aplicación, barra lateral colapsable, cabecera responsiva y búsqueda global | [`src/components/layout/README.md`](./src/components/layout/README.md) |
+| Ventas y POS UI | `src/components/sales/` | Inspector lateral de facturas, representación de comprobantes DIAN y diálogos de cartera | [`src/components/sales/README.md`](./src/components/sales/README.md) |
+| Primitivas de UI | `src/components/ui/` | Sistema de diseño, componentes accesibles, ventanas modales con control de altura y paginación | [`src/components/ui/README.md`](./src/components/ui/README.md) |
+| Librería & Preferencias | `src/lib/` | Preferencias de usuario, gestión de tema oscuro por defecto, formateo COP y clientes de BD | [`src/lib/README.md`](./src/lib/README.md) |
 
 Para más detalles, consulta la documentación técnica en [`docs/architecture/`](./docs/architecture/).
 

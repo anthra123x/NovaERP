@@ -3,6 +3,8 @@
 import React from 'react'
 import { formatCurrency, formatCurrencyInWords, generateCufe } from '@/lib/format'
 import { getPaymentMethodLabel, getCreditStatus, getCreditStatusLabel } from '@/lib/labels'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
+import type { BusinessSector } from '@/lib/business-workflow'
 
 export interface DianInvoiceSaleData {
   id: string
@@ -57,6 +59,7 @@ export interface DianInvoiceSaleData {
 interface DianInvoiceViewProps {
   sale: DianInvoiceSaleData
   className?: string
+  sector?: BusinessSector
 }
 
 /** Tarifa general de IVA vigente en Colombia. */
@@ -75,7 +78,10 @@ const IVA_RATE = 0.19
  * de globals.css oculta esos elementos para neutralizar el shell del
  * dashboard y se llevaría por delante el documento al imprimir.
  */
-export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) {
+export function DianInvoiceView({ sale, className = '', sector }: DianInvoiceViewProps) {
+  const { workflow } = useBusinessWorkflow()
+  const activeSector = sector || workflow.sector
+  const isGastronomy = activeSector === 'restaurant_gastronomy'
   const companyName = sale.invoice?.companyName || 'Nova ERP'
   const companyNit = sale.invoice?.companyNit || '900.000.000-1'
   const companyAddress = sale.invoice?.companyAddress || 'Av. Empresarial #10-20'
@@ -106,6 +112,8 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
   const discount = Number(sale.discount) || 0
   const baseGravable = Math.round((total / (1 + IVA_RATE)) * 100) / 100
   const valorIva = Math.round((total - baseGravable) * 100) / 100
+  const tipAmount = Math.round(total * 0.1 * 100) / 100
+  const totalWithTip = Math.round((total + tipAmount) * 100) / 100
 
   const isCredit = sale.paymentMethod === 'CREDITO'
   const totalPaid = (sale.payments ?? []).reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
@@ -149,7 +157,9 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
           </div>
 
           <div className="text-right shrink-0">
-            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">Factura de venta</div>
+            <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-primary">
+              {isGastronomy ? 'COMPROBANTE DE CONSUMO / FACTURA DE VENTA' : 'Factura de venta'}
+            </div>
             <div className="text-2xl font-bold tracking-tight text-slate-950 mt-1">{sale.invoiceNumber}</div>
             {isCancelled ? (
               <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mt-1">Anulada</div>
@@ -165,83 +175,115 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
         <Rule />
 
         {/* 2. Importes y fechas clave */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <KeyValue label="Total a pagar" value={formatCurrency(total, currency)} mono strong />
-          <KeyValue label="Fecha de emisión" value={dateStr} mono />
-          <KeyValue label="Vence" value={isCredit ? fmtDate(sale.dueDate) : '—'} mono />
+          <KeyValue label={isGastronomy ? 'Fecha de Consumo' : 'Fecha de emisión'} value={dateStr} mono />
+          {isGastronomy ? (
+            <KeyValue label="Condición" value="Contado / Consumo" mono />
+          ) : (
+            <KeyValue label="Vence" value={isCredit ? fmtDate(sale.dueDate) : '—'} mono />
+          )}
           <KeyValue label="Emitida" value={timeStr} mono />
         </div>
 
         <Rule />
 
         {/* 3. Destinatario y contacto */}
-        <div className="grid grid-cols-2 gap-8">
-          <div>
-            <SectionLabel>Facturar a</SectionLabel>
-            <div className="font-semibold uppercase text-slate-950">{clientName}</div>
-            {sale.client?.phone ? <div className="text-slate-600 mt-0.5">CC/NIT: {sale.client.phone}</div> : null}
-            {sale.client?.address ? <div className="text-slate-600">{sale.client.address}</div> : null}
-          </div>
-          <div>
-            <SectionLabel>Contacto</SectionLabel>
-            <div className="text-slate-600">{sale.client?.phone || companyPhone}</div>
-            {sale.client?.email ? <div className="text-slate-600">{sale.client.email}</div> : null}
-            {sale.user?.name ? (
-              <div className="text-slate-600">
-                <span className="text-slate-500">Atendió</span> {sale.user.name}
+        {isGastronomy ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+            <div>
+              <SectionLabel>Mesa / Comensal</SectionLabel>
+              <div className="font-semibold uppercase text-slate-950">
+                {sale.client?.name || 'Mesa General / Consumidor Final'}
               </div>
-            ) : null}
+              {sale.client?.phone ? <div className="text-slate-600 mt-0.5">CC/NIT: {sale.client.phone}</div> : null}
+              {sale.client?.address ? <div className="text-slate-600">{sale.client.address}</div> : null}
+            </div>
+            <div>
+              <SectionLabel>Contacto</SectionLabel>
+              <div className="text-slate-600">{sale.client?.phone || companyPhone}</div>
+              {sale.client?.email ? <div className="text-slate-600">{sale.client.email}</div> : null}
+              <div className="text-slate-600">
+                <span className="text-slate-500">Mesero / Atención</span>{' '}
+                {sale.user?.name || 'Personal de Servicio'}
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+            <div>
+              <SectionLabel>Facturar a</SectionLabel>
+              <div className="font-semibold uppercase text-slate-950">{clientName}</div>
+              {sale.client?.phone ? <div className="text-slate-600 mt-0.5">CC/NIT: {sale.client.phone}</div> : null}
+              {sale.client?.address ? <div className="text-slate-600">{sale.client.address}</div> : null}
+            </div>
+            <div>
+              <SectionLabel>Contacto</SectionLabel>
+              <div className="text-slate-600">{sale.client?.phone || companyPhone}</div>
+              {sale.client?.email ? <div className="text-slate-600">{sale.client.email}</div> : null}
+              {sale.user?.name ? (
+                <div className="text-slate-600">
+                  <span className="text-slate-500">Atendió</span> {sale.user.name}
+                </div>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         <Rule />
 
         {/* 4. Detalle */}
-        <table className="w-full border-collapse">
-          <thead>
-            <tr className="text-[9px] uppercase tracking-[0.08em] text-slate-500">
-              <th className="py-2 pr-3 font-semibold text-left w-6">#</th>
-              <th className="py-2 pr-3 font-semibold text-left">Descripción de bienes o servicios</th>
-              <th className="py-2 pr-3 font-semibold text-right w-20">Cant.</th>
-              <th className="py-2 pr-3 font-semibold text-right w-24">V. unitario</th>
-              <th className="py-2 pr-3 font-semibold text-right w-16">Desc.</th>
-              <th className="py-2 pr-3 font-semibold text-right w-14">IVA</th>
-              <th className="py-2 font-semibold text-right w-28">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sale.items.map((item, index) => (
-              <tr key={item.id || index} className="align-top">
-                <td className="py-2.5 pr-3 text-right font-mono text-slate-400">{index + 1}</td>
-                <td className="py-2.5 pr-3 text-slate-900">
-                  {item.product?.name}
-                  {item.product?.barcode ? (
-                    <div className="font-mono text-[9px] text-slate-400 mt-0.5">{item.product.barcode}</div>
-                  ) : null}
-                </td>
-                <td className="py-2.5 pr-3 text-right font-mono text-slate-700">{Number(item.quantity).toFixed(2)}</td>
-                <td className="py-2.5 pr-3 text-right font-mono text-slate-700">
-                  {formatCurrency(item.unitPrice, currency)}
-                </td>
-                <td className="py-2.5 pr-3 text-right font-mono text-slate-400">0</td>
-                <td className="py-2.5 pr-3 text-right font-mono text-slate-500">19%</td>
-                <td className="py-2.5 text-right font-mono font-medium text-slate-900">
-                  {formatCurrency(item.total, currency)}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse min-w-[560px]">
+            <thead>
+              <tr className="text-[9px] uppercase tracking-[0.08em] text-slate-500">
+                <th className="py-2 pr-3 font-semibold text-left w-6">#</th>
+                <th className="py-2 pr-3 font-semibold text-left">
+                  {isGastronomy ? 'Platillo / Bebida / Consumo' : 'Descripción de bienes o servicios'}
+                </th>
+                <th className="py-2 pr-3 font-semibold text-right w-20">Cant.</th>
+                <th className="py-2 pr-3 font-semibold text-right w-24">V. unitario</th>
+                <th className="py-2 pr-3 font-semibold text-right w-16">Desc.</th>
+                <th className="py-2 pr-3 font-semibold text-right w-14">IVA</th>
+                <th className="py-2 font-semibold text-right w-28">Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sale.items.map((item, index) => (
+                <tr key={item.id || index} className="align-top">
+                  <td className="py-2.5 pr-3 text-right font-mono text-slate-400">{index + 1}</td>
+                  <td className="py-2.5 pr-3 text-slate-900">
+                    {item.product?.name}
+                    {item.product?.barcode ? (
+                      <div className="font-mono text-[9px] text-slate-400 mt-0.5">{item.product.barcode}</div>
+                    ) : null}
+                  </td>
+                  <td className="py-2.5 pr-3 text-right font-mono text-slate-700">{Number(item.quantity).toFixed(2)}</td>
+                  <td className="py-2.5 pr-3 text-right font-mono text-slate-700">
+                    {formatCurrency(item.unitPrice, currency)}
+                  </td>
+                  <td className="py-2.5 pr-3 text-right font-mono text-slate-400">0</td>
+                  <td className="py-2.5 pr-3 text-right font-mono text-slate-500">19%</td>
+                  <td className="py-2.5 text-right font-mono font-medium text-slate-900">
+                    {formatCurrency(item.total, currency)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <Rule />
 
         {/* 5. Forma de pago, valor en letras y totales */}
-        <div className="grid grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div>
             <SectionLabel>Forma de pago</SectionLabel>
             <div className="text-slate-800">{getPaymentMethodLabel(sale.paymentMethod)}</div>
-            {creditStatus ? <div className="text-slate-600 mt-0.5">{getCreditStatusLabel(creditStatus)}</div> : null}
-            {isCredit ? (
+            {!isGastronomy && creditStatus ? (
+              <div className="text-slate-600 mt-0.5">{getCreditStatusLabel(creditStatus)}</div>
+            ) : null}
+            {!isGastronomy && isCredit ? (
               <div className="text-slate-600 mt-0.5">
                 Abonado <span className="font-mono">{formatCurrency(totalPaid, currency)}</span>
               </div>
@@ -253,7 +295,7 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
             <div className="text-slate-800">
               <span className="uppercase">Son</span> {formatCurrencyInWords(total)}
             </div>
-            {isCredit && pendingBalance > 0 ? (
+            {!isGastronomy && isCredit && pendingBalance > 0 ? (
               <div className="text-slate-500 mt-1 text-[9.5px]">Saldo: {formatCurrencyInWords(pendingBalance)}</div>
             ) : null}
           </div>
@@ -266,6 +308,22 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
               <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-950">Total</dt>
               <dd className="text-[15px] font-bold font-mono text-slate-950">{formatCurrency(total, currency)}</dd>
             </div>
+            {isGastronomy && (
+              <>
+                <TotalRow
+                  label="Propina voluntaria sugerida (10%)"
+                  value={formatCurrency(tipAmount, currency)}
+                />
+                <div className="flex items-baseline justify-between gap-3 pt-1 border-t border-dashed border-slate-300">
+                  <dt className="text-[10px] font-bold uppercase tracking-[0.1em] text-slate-950">
+                    Total con propina sugerida
+                  </dt>
+                  <dd className="text-[13px] font-bold font-mono text-slate-950">
+                    {formatCurrency(totalWithTip, currency)}
+                  </dd>
+                </div>
+              </>
+            )}
           </dl>
         </div>
 
@@ -279,8 +337,10 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
         {/* 6. Firmas */}
         <div className="grid grid-cols-2 gap-8">
           <div>
-            <SectionLabel>Aceptado por</SectionLabel>
-            <div className="text-slate-800">{clientName}</div>
+            <SectionLabel>{isGastronomy ? 'Recibido por' : 'Aceptado por'}</SectionLabel>
+            <div className="text-slate-800">
+              {isGastronomy ? (sale.client?.name || 'Mesa General / Consumidor Final') : clientName}
+            </div>
           </div>
           <div>
             <SectionLabel>Firma</SectionLabel>
@@ -290,7 +350,17 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
         </div>
 
         {/* Términos de garantía y política del negocio */}
-        {sale.invoice?.invoiceFooter && (
+        {isGastronomy ? (
+          <>
+            <div className="rounded border border-amber-200/80 bg-amber-50/60 p-2.5 text-[9px] text-amber-950 leading-relaxed">
+              <div className="font-semibold text-amber-900 uppercase tracking-wider mb-0.5 text-[8px]">
+                Control de Consumo & Ley de Propinas
+              </div>
+              De conformidad con la Ley 1935 de 2018, la propina es voluntaria (sugerida 10%). Este documento constituye soporte de consumo / cuenta de cobro de mesa. ¡Gracias por su visita!
+            </div>
+            <Rule />
+          </>
+        ) : sale.invoice?.invoiceFooter ? (
           <>
             <div className="rounded border border-slate-200 bg-slate-50/80 p-2.5 text-[9px] text-slate-600 leading-relaxed">
               <div className="font-semibold text-slate-800 uppercase tracking-wider mb-0.5 text-[8px]">
@@ -300,7 +370,7 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
             </div>
             <Rule />
           </>
-        )}
+        ) : null}
 
         {/*
           Cierre fiscal reducido a la identificacion del documento. La

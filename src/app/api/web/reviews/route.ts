@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createProductReview, getProductReviews } from '@/modules/web/web.service'
-import { enforceRateLimit, handleApiError, json, readJsonBody } from '@/lib/api-utils'
+import { catalogCacheHeaders, enforceRateLimit, handleApiError, json, readJsonBody } from '@/lib/api-utils'
 import { CreateProductReviewSchema } from '@/lib/validations'
 import { getZodErrorMessage } from '@/lib/zod-error'
 
@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const reviews = await getProductReviews(productId)
-    return json({ reviews })
+    return json({ reviews }, { headers: catalogCacheHeaders })
   } catch (error) {
     return handleApiError(error, 'GET /api/web/reviews')
   }

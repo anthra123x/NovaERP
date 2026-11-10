@@ -22,7 +22,7 @@ export const PREFERENCES_STORAGE_KEY = 'nova_erp_user_preferences'
 export const PREFERENCES_CHANGED_EVENT = 'nova_preferences_changed'
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
-  theme: 'light',
+  theme: 'dark',
   accentColor: 'emerald',
   tableDensity: 'normal',
   defaultModule: '/dashboard',
@@ -151,14 +151,17 @@ export function saveUserPreferences(partial: Partial<UserPreferences>): UserPref
 export function applyTheme(theme: ThemeMode) {
   if (typeof document === 'undefined') return
 
-  const isDark =
-    theme === 'dark' ||
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+  const isLight =
+    theme === 'light' ||
+    (theme === 'system' &&
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      !window.matchMedia('(prefers-color-scheme: dark)').matches)
 
-  if (isDark) {
-    document.documentElement.classList.add('dark')
-  } else {
+  if (isLight) {
     document.documentElement.classList.remove('dark')
+  } else {
+    document.documentElement.classList.add('dark')
   }
 }
 
@@ -172,6 +175,23 @@ export function applyTableDensity(density: TableDensity) {
   } else {
     document.documentElement.classList.remove('compact-density')
   }
+}
+
+/**
+ * Utilidades para sincronización reactiva con useSyncExternalStore en React
+ */
+export function getThemeSnapshot(): ThemeMode {
+  return getUserPreferences().theme
+}
+
+export function getThemeServerSnapshot(): ThemeMode {
+  return 'dark'
+}
+
+export function subscribePreferences(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {}
+  window.addEventListener(PREFERENCES_CHANGED_EVENT, callback)
+  return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, callback)
 }
 
 /**

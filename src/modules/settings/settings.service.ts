@@ -130,6 +130,13 @@ export const SECTOR_STARTER_CATEGORIES: Record<
     { name: 'Accesorios Varios', slug: 'accesorios-varios', color: '#f59e0b' },
     { name: 'Promociones y Ofertas', slug: 'promociones-ofertas', color: '#ef4444' },
   ],
+  restaurant_gastronomy: [
+    { name: 'Entradas & Aperitivos', slug: 'entradas-aperitivos', color: '#f59e0b' },
+    { name: 'Platos Fuertes & Especialidades', slug: 'platos-fuertes-especialidades', color: '#ea580c' },
+    { name: 'Bebidas, Cafés & Coctelería', slug: 'bebidas-cafes-cocteleria', color: '#06b6d4' },
+    { name: 'Postres & Repostería', slug: 'postres-reposteria', color: '#ec4899' },
+    { name: 'Guarniciones & Adicionales', slug: 'guarniciones-adicionales', color: '#10b981' },
+  ],
 }
 
 const SECTOR_DEFAULT_SLOGANS: Record<BusinessSector, string> = {
@@ -140,6 +147,7 @@ const SECTOR_DEFAULT_SLOGANS: Record<BusinessSector, string> = {
   pharmacy_health: 'Salud, bienestar y asesoría farmacéutica confiable',
   services_workshop: 'Mantenimiento preventivo, repuestos y diagnóstico profesional',
   retail_general: 'Calidad, confianza y el mejor surtido',
+  restaurant_gastronomy: 'Sabor excepcional, calidez en el servicio y la mejor experiencia gastronómica',
 }
 
 export function classifyBusinessSector(text: string): {
@@ -187,6 +195,13 @@ export function classifyBusinessSector(text: string): {
       'tienda', 'comercio', 'articulos', 'variedades', 'bazar', 'papeleria', 'regalos', 'detalles',
       'distribuidora', 'venta directa',
     ],
+    restaurant_gastronomy: [
+      'restaurante', 'cafeteria', 'comida', 'plato', 'platos', 'bebida', 'bebidas', 'menu',
+      'comanda', 'mesa', 'mesas', 'mesero', 'desayuno', 'almuerzo', 'cena', 'cafe',
+      'postre', 'postres', 'gastronomia', 'chef', 'cocina', 'hamburguesa', 'pizza',
+      'pollo', 'carne', 'asado', 'parrilla', 'panaderia', 'bar', 'coctel', 'cocteles',
+      'alimentos preparados', 'comensal',
+    ],
   }
 
   const scores: Record<BusinessSector, { count: number; matches: string[] }> = {
@@ -197,6 +212,7 @@ export function classifyBusinessSector(text: string): {
     pharmacy_health: { count: 0, matches: [] },
     services_workshop: { count: 0, matches: [] },
     retail_general: { count: 0, matches: [] },
+    restaurant_gastronomy: { count: 0, matches: [] },
   }
 
   for (const [sec, keywords] of Object.entries(dictionary) as [BusinessSector, string[]][]) {
@@ -248,7 +264,7 @@ export async function autoConfigureBusinessWithAi(description: string): Promise<
     try {
       const response = await completeWithRotation({
         system:
-          'Eres un arquitecto de ERP empresarial. Analiza la descripción libre del negocio y clasifícalo en exactamente uno de estos sectores: ["technology_repair", "fashion_apparel", "grocery_supermarket", "hardware_construction", "pharmacy_health", "services_workshop", "retail_general"]. Devuelve SOLO un JSON con: {"sector": string, "companyName": string | null, "slogan": string | null, "suggestedMargin": number}.',
+          'Eres un arquitecto de ERP empresarial. Analiza la descripción libre del negocio y clasifícalo en exactamente uno de estos sectores: ["technology_repair", "fashion_apparel", "grocery_supermarket", "hardware_construction", "pharmacy_health", "services_workshop", "retail_general", "restaurant_gastronomy"]. Devuelve SOLO un JSON con: {"sector": string, "companyName": string | null, "slogan": string | null, "suggestedMargin": number}.',
         messages: [{ role: 'user', content: description }],
       })
       usedAiModel = `${response.agent.provider} · ${response.agent.model}`
@@ -287,12 +303,12 @@ export async function autoConfigureBusinessWithAi(description: string): Promise<
     sector,
     slogan,
     defaultProfitMargin: margin,
-    allowCreditSales: sector !== 'grocery_supermarket',
+    allowCreditSales: sector !== 'grocery_supermarket' && sector !== 'restaurant_gastronomy',
     requireClientOnSale: sector === 'technology_repair' || sector === 'services_workshop',
     allowNegativeStock: false,
     allowCashierDiscounts: sector === 'fashion_apparel' || sector === 'retail_general',
     autoPrintReceipt: sector === 'grocery_supermarket',
-    barcodeContinuousScan: sector !== 'services_workshop',
+    barcodeContinuousScan: sector !== 'services_workshop' && sector !== 'restaurant_gastronomy',
     requireAdjustmentReason: true,
     ...(extractedCompany ? { companyName: extractedCompany } : {}),
   }

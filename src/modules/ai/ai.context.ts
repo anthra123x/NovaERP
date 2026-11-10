@@ -83,6 +83,7 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
     labels: sectorProfile.labels,
   }
 
+  const lowStockThreshold = settings?.lowStockThreshold ?? 5
   const company = {
     name: settings?.companyName || 'Cilmax',
     storeName:
@@ -92,7 +93,7 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
         ? String((storeSetting.value as Record<string, unknown>).storeName)
         : settings?.companyName || 'Cilmax',
     currency: settings?.currency || 'COP',
-    lowStockThreshold: settings?.lowStockThreshold ?? 5,
+    lowStockThreshold,
     webPendingExpiryHours: settings?.webPendingExpiryHours ?? 24,
   }
 
@@ -100,56 +101,101 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
   const monthStart = dateStartOfMonth()
 
   const [
-    salesTodayRows,
-    salesMonthRows,
-    creditRows,
-    products,
-    webOrders,
+    salesTodayData,
+    salesMonthData,
+    creditSummaryRaw,
+    totalProducts,
+    unitsAgg,
+    lowStockCountRaw,
+    outOfStockCount,
+    lowStockTopRaw,
+    webOrderGroups,
     clientsTotal,
     clientsNew,
     contactUnread,
     webVisible,
   ] = await Promise.all([
-    prisma.sale.findMany({
+    // 1. Ventas hoy (agregadas en SQL)
+    prisma.sale.aggregate({
       where: { status: 'COMPLETED', saleDate: { gte: dayStart } },
-      select: { total: true },
+      _count: { id: true },
+      _sum: { total: true },
     }),
-    prisma.sale.findMany({
+    // 2. Ventas mes (agregadas en SQL)
+    prisma.sale.aggregate({
       where: { status: 'COMPLETED', saleDate: { gte: monthStart } },
-      select: { total: true },
+      _count: { id: true },
+      _sum: { total: true },
     }),
-    prisma.sale.findMany({
-      where: { paymentMethod: 'CREDITO', status: 'COMPLETED' },
-      select: { total: true, payments: { select: { amount: true } } },
-    }),
-    prisma.product.findMany({
+    // 3. Cartera a crédito pendiente agregada en SQL
+    prisma.$queryRaw<Array<{ total: number; salesCount: number }>>`
+      SELECT
+        COALESCE(SUM(s.total - COALESCE(p.paid, 0)), 0)::float AS total,
+        COUNT(*)::int AS "salesCount"
+      FROM sales s
+      LEFT JOIN (
+        SELECT "saleId", SUM(amount) AS paid
+        FROM payments
+        GROUP BY "saleId"
+      ) p ON p."saleId" = s.id
+      WHERE s."paymentMethod" = 'CREDITO'
+        AND s.status = 'COMPLETED'
+        AND (s.total - COALESCE(p.paid, 0)) > 0.005
+    `,
+    // 4. Conteo de productos activos
+    prisma.product.count({ where: { deletedAt: null } }),
+    // 5. Total de unidades en stock
+    prisma.product.aggregate({
       where: { deletedAt: null },
-      select: {
-        name: true,
-        stock: true,
-        lowStockThreshold: true,
-        costPrice: true,
-        salePrice: true,
-        category: { select: { name: true } },
-      },
+      _sum: { stock: true },
     }),
-    prisma.webOrder.findMany({ select: { status: true } }),
+    // 6. Conteo de stock bajo
+    prisma.$queryRaw<Array<{ count: number }>>`
+      SELECT COUNT(*)::int AS count
+      FROM products
+      WHERE "deletedAt" IS NULL
+        AND stock <= "lowStockThreshold"
+    `,
+    // 7. Conteo de agotados
+    prisma.product.count({ where: { deletedAt: null, stock: { lte: 0 } } }),
+    // 8. Top 10 productos con stock bajo (con categoría)
+    prisma.$queryRaw<Array<{ name: string; stock: number; threshold: number; category: string | null }>>`
+      SELECT
+        p.name,
+        p.stock,
+        p."lowStockThreshold" AS threshold,
+        c.name AS category
+      FROM products p
+      LEFT JOIN product_categories c ON c.id = p."categoryId"
+      WHERE p."deletedAt" IS NULL
+        AND p.stock <= p."lowStockThreshold"
+      ORDER BY p.stock ASC
+      LIMIT 10
+    `,
+    // 9. Pedidos web agrupados por estado
+    prisma.webOrder.groupBy({
+      by: ['status'],
+      _count: { id: true },
+    }),
+    // 10. Clientes totales
     prisma.client.count({ where: { deletedAt: null } }),
+    // 11. Clientes nuevos del mes
     prisma.client.count({ where: { deletedAt: null, createdAt: { gte: monthStart } } }),
+    // 12. Mensajes de contacto no leídos
     prisma.contactMessage.count({ where: { read: false } }),
+    // 13. Productos visibles en web
     prisma.product.count({ where: { deletedAt: null, webVisible: true } }),
   ])
 
-  const salesTodayTotal = salesTodayRows.reduce((sum, s) => sum + s.total, 0)
-  const salesMonthTotal = salesMonthRows.reduce((sum, s) => sum + s.total, 0)
+  const salesTodayCount = salesTodayData?._count?.id ?? 0
+  const salesTodayTotal = salesTodayData?._sum?.total ?? 0
+  const salesMonthCount = salesMonthData?._count?.id ?? 0
+  const salesMonthTotal = salesMonthData?._sum?.total ?? 0
 
-  let creditTotal = 0
-  for (const sale of creditRows) {
-    const paid = sale.payments.reduce((sum, p) => sum + p.amount, 0)
-    creditTotal += sale.total - paid
-  }
+  const creditTotal = Number(creditSummaryRaw?.[0]?.total ?? 0)
+  const creditSalesCount = Number(creditSummaryRaw?.[0]?.salesCount ?? 0)
 
-  const lowStock = products.filter((p) => p.stock <= p.lowStockThreshold).sort((a, b) => a.stock - b.stock)
+  const lowStockCount = Number(lowStockCountRaw?.[0]?.count ?? 0)
 
   const webOrderCounts: BusinessSnapshot['webOrders'] = {
     PENDING: 0,
@@ -157,32 +203,36 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
     CONVERTED: 0,
     CANCELLED: 0,
   }
-  for (const order of webOrders) {
-    webOrderCounts[order.status] = (webOrderCounts[order.status] ?? 0) + 1
+  for (const group of webOrderGroups ?? []) {
+    if (group.status in webOrderCounts) {
+      webOrderCounts[group.status as keyof typeof webOrderCounts] = group._count?.id ?? 0
+    }
   }
+
+  const lowStockTop = (lowStockTopRaw ?? []).map((p) => ({
+    name: p.name,
+    stock: Number(p.stock),
+    threshold: Number(p.threshold),
+    category: p.category ?? null,
+  }))
 
   return {
     company,
     sector,
-    salesToday: { count: salesTodayRows.length, total: salesTodayTotal },
-    salesThisMonth: { count: salesMonthRows.length, total: salesMonthTotal },
-    pendingCredit: { total: creditTotal, salesCount: creditRows.length },
+    salesToday: { count: salesTodayCount, total: salesTodayTotal },
+    salesThisMonth: { count: salesMonthCount, total: salesMonthTotal },
+    pendingCredit: { total: creditTotal, salesCount: creditSalesCount },
     inventory: {
-      products: products.length,
-      units: products.reduce((sum, p) => sum + p.stock, 0),
-      lowStockCount: lowStock.length,
-      outOfStockCount: lowStock.filter((p) => p.stock <= 0).length,
-      lowStockTop: lowStock.slice(0, 10).map((p) => ({
-        name: p.name,
-        stock: p.stock,
-        threshold: p.lowStockThreshold,
-        category: p.category?.name ?? null,
-      })),
+      products: totalProducts ?? 0,
+      units: unitsAgg?._sum?.stock ?? 0,
+      lowStockCount,
+      outOfStockCount: outOfStockCount ?? 0,
+      lowStockTop,
     },
     webOrders: webOrderCounts,
-    clients: { total: clientsTotal, newThisMonth: clientsNew },
-    contactUnread,
-    webVisibleProducts: webVisible,
+    clients: { total: clientsTotal ?? 0, newThisMonth: clientsNew ?? 0 },
+    contactUnread: contactUnread ?? 0,
+    webVisibleProducts: webVisible ?? 0,
     askedAt: new Date().toISOString(),
   }
 }

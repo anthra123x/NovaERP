@@ -246,7 +246,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
           {/* Menú flotante de resultados globales */}
           {open && query.trim().length >= 2 && (
-            <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 z-50 rounded-2xl border border-border/80 bg-popover/98 backdrop-blur-xl text-popover-foreground shadow-2xl overflow-hidden animate-fade-in">
+            <div className="absolute -left-10 sm:left-0 top-full mt-2 w-[calc(100vw-2.5rem)] sm:w-96 max-w-md z-50 rounded-2xl border border-border/80 bg-popover/98 backdrop-blur-xl text-popover-foreground shadow-2xl overflow-hidden animate-fade-in">
               {searching ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />

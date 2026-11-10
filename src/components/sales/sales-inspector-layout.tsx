@@ -51,7 +51,7 @@ export function SalesInspectorLayout({ selectedSaleId, onClose, children }: Sale
       <div
         className={cn(
           'w-full shrink-0 overflow-hidden transition-[width] duration-[380ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none',
-          isOpen ? 'xl:w-[336px] 2xl:w-[368px]' : 'xl:w-0',
+          isOpen ? 'xl:w-[336px] 2xl:w-[368px]' : 'hidden xl:block xl:w-0',
         )}
       >
         <InvoiceSidePanel saleId={selectedSaleId} onClose={onClose} />

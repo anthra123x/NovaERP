@@ -1,6 +1,7 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 import { formatCurrency } from '@/lib/format'
+import type { BusinessSector } from '@/lib/business-workflow'
 
 export const FONT = 'Helvetica'
 
@@ -44,6 +45,7 @@ export interface PdfSettings {
   invoicePrefix: string
   invoiceFooter: string | null
   currency: string
+  sector?: BusinessSector
 }
 
 export const defaultPdfSettings: PdfSettings = {

@@ -1,5 +1,6 @@
 'use server'
 
+import { cache } from 'react'
 import { supabase, createSupabaseServerAction } from '@/lib/supabase-server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
@@ -31,7 +32,7 @@ export async function logout() {
   redirect('/login')
 }
 
-export async function getCurrentUser() {
+export const getCurrentUser = cache(async () => {
   try {
     const supabase = await createSupabaseServerAction()
 
@@ -111,7 +112,7 @@ export async function getCurrentUser() {
     }
     return null
   }
-}
+})
 
 export async function requireAuth() {
   const user = await getCurrentUser()
@@ -497,11 +498,11 @@ export async function registerCompanyAndOwnerAction(data: RegisterCompanyInput) 
       slogan: slogan || sectorInfo.description,
       logoUrl: logoUrl || null,
       defaultProfitMargin: sectorInfo.suggestedMargin,
-      allowCreditSales: true,
+      allowCreditSales: sector !== 'restaurant_gastronomy',
       requireClientOnSale: false,
       allowNegativeStock: false,
       allowCashierDiscounts: true,
-      barcodeContinuousScan: true,
+      barcodeContinuousScan: sector !== 'services_workshop' && sector !== 'restaurant_gastronomy',
     })
 
     revalidatePath('/admin')

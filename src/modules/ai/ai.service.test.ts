@@ -6,12 +6,13 @@ const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
     systemSettings: { findFirst: vi.fn() },
     storeSetting: { findUnique: vi.fn() },
-    sale: { findMany: vi.fn(), groupBy: vi.fn() },
-    product: { findMany: vi.fn(), count: vi.fn() },
+    sale: { findMany: vi.fn(), groupBy: vi.fn(), aggregate: vi.fn() },
+    product: { findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
     webOrder: { groupBy: vi.fn(), findMany: vi.fn() },
     client: { count: vi.fn(), findMany: vi.fn() },
     contactMessage: { count: vi.fn(), findMany: vi.fn() },
     expense: { aggregate: vi.fn() },
+    $queryRaw: vi.fn(),
   },
 }))
 
@@ -29,10 +30,12 @@ function defaultMocks() {
     { id: '1', total: 150000, paymentMethod: 'CASH', payments: [], client: null, saleDate: new Date() },
   ])
   prismaMock.sale.groupBy.mockResolvedValue([])
+  prismaMock.sale.aggregate.mockResolvedValue({ _count: { id: 1 }, _sum: { total: 150000 } })
   prismaMock.product.findMany.mockResolvedValue([
     { name: 'Bajo', stock: 1, lowStockThreshold: 5, costPrice: 10000, salePrice: 20000, category: null },
   ])
   prismaMock.product.count.mockResolvedValue(1)
+  prismaMock.product.aggregate.mockResolvedValue({ _sum: { stock: 1 } })
   prismaMock.webOrder.groupBy.mockResolvedValue([])
   prismaMock.webOrder.findMany.mockResolvedValue([])
   prismaMock.client.count.mockResolvedValue(3)
@@ -40,6 +43,7 @@ function defaultMocks() {
   prismaMock.contactMessage.count.mockResolvedValue(1)
   prismaMock.contactMessage.findMany.mockResolvedValue([])
   prismaMock.expense.aggregate.mockResolvedValue({ _sum: { amount: 0 } })
+  prismaMock.$queryRaw.mockResolvedValue([])
 }
 
 function openaiResponse(content: string): Response {

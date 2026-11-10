@@ -125,6 +125,17 @@ export const ChangePasswordSchema = z.object({
 })
 
 // ─── Settings ───────────────────────────────────────────────────────────────
+export const BusinessSectorSchema = z.enum([
+  'retail_general',
+  'technology_repair',
+  'fashion_apparel',
+  'grocery_supermarket',
+  'hardware_construction',
+  'pharmacy_health',
+  'services_workshop',
+  'restaurant_gastronomy',
+])
+
 export const UpdateSettingsSchema = z.object({
   companyName: z.string().min(1, 'El nombre es requerido').optional(),
   companyAddress: z.string().optional().nullable(),

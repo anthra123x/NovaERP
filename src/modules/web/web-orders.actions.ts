@@ -80,57 +80,72 @@ export async function getAdminWebOrderById(id: string) {
 export async function convertWebOrderToSale(id: string) {
   await requireAuth()
 
-  const order = await prisma.webOrder.findUnique({ where: { id }, include: { items: true } })
-  if (!order) return { error: 'Pedido no encontrado' }
-  if (order.status === 'CONVERTED' || order.status === 'CANCELLED') {
-    return { error: 'El pedido ya no está pendiente' }
-  }
-
-  const items = order.items.map((item) => {
-    if (!item.productId) {
-      throw new Error(`"${item.productName}" ya no tiene referencia de producto en inventario`)
-    }
-    return { productId: item.productId, quantity: item.quantity }
-  })
-
   try {
-    let clientId: string | null = null
-    if (order.customerPhone) {
-      const existing = await prisma.client.findFirst({
-        where: { phone: order.customerPhone, deletedAt: null },
-        select: { id: true },
-      })
-      if (existing) {
-        clientId = existing.id
-      } else {
-        const created = await prisma.client.create({
-          data: { name: order.customerName, phone: order.customerPhone, email: order.customerEmail ?? null },
-        })
-        clientId = created.id
+    const conversionResult = await prisma.$transaction(async (tx) => {
+      // Bloqueo exclusivo FOR UPDATE sobre el pedido para serializar conversiones concurrentes
+      const lockedRows = await tx.$queryRaw<Array<{ id: string; status: string }>>`
+        SELECT id, status FROM web_orders WHERE id = ${id} FOR UPDATE
+      `
+      const locked = lockedRows[0]
+      if (!locked) return { error: 'Pedido no encontrado' }
+      if (locked.status === 'CONVERTED' || locked.status === 'CANCELLED') {
+        return { error: 'El pedido ya no está pendiente' }
       }
+
+      const order = await tx.webOrder.findUnique({ where: { id }, include: { items: true } })
+      if (!order) return { error: 'Pedido no encontrado' }
+
+      const items = order.items.map((item) => {
+        if (!item.productId) {
+          throw new Error(`"${item.productName}" ya no tiene referencia de producto en inventario`)
+        }
+        return { productId: item.productId, quantity: item.quantity }
+      })
+
+      let clientId: string | null = null
+      if (order.customerPhone) {
+        const existing = await tx.client.findFirst({
+          where: { phone: order.customerPhone, deletedAt: null },
+          select: { id: true },
+        })
+        if (existing) {
+          clientId = existing.id
+        } else {
+          const created = await tx.client.create({
+            data: { name: order.customerName, phone: order.customerPhone, email: order.customerEmail ?? null },
+          })
+          clientId = created.id
+        }
+      }
+
+      // Si el pedido estaba CONFIRMED, el stock ya fue descontado y no debe
+      // volver a descontarse al crear la venta (solo se valida disponibilidad).
+      const result = await createSale({
+        clientId,
+        items,
+        discount: 0,
+        paymentMethod: 'CASH',
+        stockReserved: order.status === 'CONFIRMED',
+      })
+
+      if (!result.success) return { error: result.error }
+
+      await tx.webOrder.update({
+        where: { id },
+        data: { status: 'CONVERTED', convertedSaleId: result.sale.id },
+      })
+
+      return { success: `Pedido convertido a la venta ${result.sale.invoiceNumber}`, saleId: result.sale.id }
+    })
+
+    if ('error' in conversionResult) {
+      return conversionResult
     }
-
-    // Si el pedido estaba CONFIRMED, el stock ya fue descontado y no debe
-    // volver a descontarse al crear la venta (solo se valida disponibilidad).
-    const result = await createSale({
-      clientId,
-      items,
-      discount: 0,
-      paymentMethod: 'CASH',
-      stockReserved: order.status === 'CONFIRMED',
-    })
-
-    if (!result.success) return { error: result.error }
-
-    await prisma.webOrder.update({
-      where: { id },
-      data: { status: 'CONVERTED', convertedSaleId: result.sale.id },
-    })
 
     revalidateWebOrderPaths()
     revalidatePath('/web/orders/' + id)
     revalidateSalePaths()
-    return { success: `Pedido convertido a la venta ${result.sale.invoiceNumber}`, saleId: result.sale.id }
+    return conversionResult
   } catch (error) {
     return { error: parseError(error, 'No se pudo convertir el pedido').message }
   }

@@ -40,6 +40,9 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
   const pathname = usePathname()
   const { config: workflow, profile } = useBusinessWorkflow()
 
+  const isCreditDisabled = workflow.sector === 'restaurant_gastronomy' || workflow.allowCreditSales === false
+  const visibleNavigation = navigation.filter((item) => !(item.href === '/credits' && isCreditDisabled))
+
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === '/dashboard'
     return pathname === href || pathname.startsWith(href + '/')
@@ -174,7 +177,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
             : 'px-3 space-y-1 overflow-y-auto overflow-x-hidden',
         )}
       >
-        {navigation.map((item) => {
+        {visibleNavigation.map((item) => {
           const active = isActive(item.href)
 
           if (collapsed) {

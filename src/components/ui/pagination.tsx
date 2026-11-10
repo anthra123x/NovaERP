@@ -46,8 +46,8 @@ export function Pagination({ page, totalPages, total, entity, onPageChange }: Pa
   const visiblePages = getVisiblePages(page, totalPages)
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-t">
-      <p className="text-sm text-muted-foreground tabular-nums">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-6 py-4 border-t">
+      <p className="text-sm text-muted-foreground tabular-nums text-center sm:text-left">
         Página {page} de {totalPages} &mdash; {total} {entity}
       </p>
       <div className="flex items-center gap-1">

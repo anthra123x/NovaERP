@@ -30,7 +30,8 @@ import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 import { BusinessInsights } from './business-insights'
 
 export default function DashboardPage() {
-  const { profile } = useBusinessWorkflow()
+  const { config: workflow, profile } = useBusinessWorkflow()
+  const isCreditDisabled = workflow.sector === 'restaurant_gastronomy' || !workflow.allowCreditSales
   const [data, setData] = useState<DashboardOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -57,7 +58,7 @@ export default function DashboardPage() {
     return (
       <div className="space-y-4 animate-pulse">
         <div className="h-10 bg-card rounded-xl border border-dashed border-border/80" />
-        <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+        <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
           {[...Array(8)].map((_, i) => (
             <div key={i} className="h-24 bg-card rounded-xl border border-dashed border-border/80 p-3" />
           ))}
@@ -164,7 +165,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2. Matriz de Celdas Métricas estilo Hoja de Cálculo (A1..H1) */}
-      <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-8">
+      <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
         {/* Celda A1: Ventas Hoy */}
         <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-primary/50 transition-colors">
           <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
@@ -234,29 +235,54 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Celda D1: Cartera CxC */}
-        <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-sky-500/50 transition-colors">
-          <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
-            <span>[D1] CARTERA CXC</span>
-            <HandCoins className="h-3 w-3 text-sky-600 dark:text-sky-400" />
-          </div>
-          <div className="my-1.5">
-            <div className="text-base sm:text-lg font-bold font-mono text-sky-600 dark:text-sky-400 tracking-tight">
-              {formatCurrency(pendingCreditTotal)}
+        {/* Celda D1: Cobro Contado o Cartera CxC */}
+        {isCreditDisabled ? (
+          <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-emerald-500/50 transition-colors">
+            <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+              <span>[D1] COBRO CONTADO</span>
+              <Wallet className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div className="my-1.5">
+              <div className="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight">
+                {formatCurrency(incomeToday)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+                <span>Recaudado en caja hoy</span>
+                <Link href="/sales" className="font-bold text-primary hover:underline">
+                  Ventas &rarr;
+                </Link>
+              </div>
+              <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-emerald-500" style={{ width: incomeToday > 0 ? '100%' : '0%' }} />
+              </div>
             </div>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
-              <span>{pendingCreditClientsCount} deudores</span>
-              <Link href="/credits" className="font-bold text-primary hover:underline">
-                Cobrar &rarr;
-              </Link>
+        ) : (
+          <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-sky-500/50 transition-colors">
+            <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground">
+              <span>[D1] CARTERA CXC</span>
+              <HandCoins className="h-3 w-3 text-sky-600 dark:text-sky-400" />
             </div>
-            <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-sky-500" style={{ width: pendingCreditTotal > 0 ? '100%' : '0%' }} />
+            <div className="my-1.5">
+              <div className="text-base sm:text-lg font-bold font-mono text-sky-600 dark:text-sky-400 tracking-tight">
+                {formatCurrency(pendingCreditTotal)}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[9px] font-mono text-muted-foreground">
+                <span>{pendingCreditClientsCount} deudores</span>
+                <Link href="/credits" className="font-bold text-primary hover:underline">
+                  Cobrar &rarr;
+                </Link>
+              </div>
+              <div className="h-1 w-full bg-muted rounded-full overflow-hidden">
+                <div className="h-full bg-sky-500" style={{ width: pendingCreditTotal > 0 ? '100%' : '0%' }} />
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Celda E1: Acumulado Mes (MTD) */}
         <div className="bg-card border border-dashed border-border/80 dark:border-white/[0.12] rounded-xl p-2.5 flex flex-col justify-between hover:border-primary/50 transition-colors">
@@ -357,7 +383,7 @@ export default function DashboardPage() {
       </div>
 
       {/* 2.5. Diagnósticos Proactivos e Insights Cognitivos (Copiloto AI) */}
-      <BusinessInsights data={data} profile={profile} />
+      <BusinessInsights data={data} profile={profile} workflow={workflow} />
 
       {/* 3. Módulos de Análisis Métrico Visual: Facturación y Tesorería */}
       <div className="grid gap-3 grid-cols-1 lg:grid-cols-2">

@@ -27,11 +27,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="es" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{var r=localStorage.getItem('nova_erp_user_preferences');if(r){var p=JSON.parse(r);if(p.theme==='dark'||(p.theme==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}if(p.tableDensity==='compact'){document.documentElement.classList.add('compact-density');}}}catch(e){}`,
+            __html: `try{var r=localStorage.getItem('nova_erp_user_preferences');var isLight=false;if(r){var p=JSON.parse(r);if(p.theme==='light'||(p.theme==='system'&&window.matchMedia&&!window.matchMedia('(prefers-color-scheme: dark)').matches)){isLight=true;}if(p.tableDensity==='compact'){document.documentElement.classList.add('compact-density');}}if(isLight){document.documentElement.classList.remove('dark');}else{document.documentElement.classList.add('dark');}}catch(e){}`,
           }}
         />
       </head>

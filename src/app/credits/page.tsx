@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Eye, HandCoins } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,6 +12,7 @@ import { getCreditSales, getCreditSummary } from '@/modules/sales/payments.actio
 import { getCreditStatusLabel, getCreditStatusColor } from '@/lib/labels'
 import { RegistrarAbonoDialog } from '@/components/sales/registrar-abono-dialog'
 import { CreditSearch } from '@/components/sales/credit-search'
+import { getBusinessWorkflowConfig } from '@/modules/settings/settings.service'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +30,11 @@ export default async function CreditsPage({
 }: {
   searchParams: Promise<{ search?: string; estado?: string; page?: string }>
 }) {
+  const workflow = await getBusinessWorkflowConfig()
+  if (workflow.sector === 'restaurant_gastronomy' || !workflow.allowCreditSales) {
+    redirect('/sales')
+  }
+
   const sp = await searchParams
   const search = sp.search || ''
   const estado = (sp.estado as 'PAID' | 'OVERDUE' | 'PENDING' | 'ALL') || 'ALL'

@@ -7,12 +7,13 @@ const { prismaMock } = vi.hoisted(() => ({
   prismaMock: {
     systemSettings: { findFirst: vi.fn() },
     storeSetting: { findUnique: vi.fn() },
-    sale: { findMany: vi.fn(), groupBy: vi.fn() },
-    product: { findMany: vi.fn(), count: vi.fn() },
+    sale: { findMany: vi.fn(), groupBy: vi.fn(), aggregate: vi.fn() },
+    product: { findMany: vi.fn(), count: vi.fn(), aggregate: vi.fn() },
     webOrder: { groupBy: vi.fn(), findMany: vi.fn() },
     client: { count: vi.fn(), findMany: vi.fn() },
     contactMessage: { count: vi.fn(), findMany: vi.fn() },
     expense: { aggregate: vi.fn() },
+    $queryRaw: vi.fn(),
   },
 }))
 
@@ -28,8 +29,10 @@ function defaultMocks() {
   prismaMock.storeSetting.findUnique.mockResolvedValue({ key: 'store', value: { storeName: 'Tienda Demo' } })
   prismaMock.sale.findMany.mockResolvedValue([])
   prismaMock.sale.groupBy.mockResolvedValue([])
+  prismaMock.sale.aggregate.mockResolvedValue({ _count: { id: 0 }, _sum: { total: 0 } })
   prismaMock.product.findMany.mockResolvedValue([])
   prismaMock.product.count.mockResolvedValue(0)
+  prismaMock.product.aggregate.mockResolvedValue({ _sum: { stock: 0 } })
   prismaMock.webOrder.groupBy.mockResolvedValue([])
   prismaMock.webOrder.findMany.mockResolvedValue([])
   prismaMock.client.count.mockResolvedValue(0)
@@ -37,6 +40,7 @@ function defaultMocks() {
   prismaMock.contactMessage.count.mockResolvedValue(0)
   prismaMock.contactMessage.findMany.mockResolvedValue([])
   prismaMock.expense.aggregate.mockResolvedValue({ _sum: { amount: 0 } })
+  prismaMock.$queryRaw.mockResolvedValue([])
 }
 
 beforeEach(() => {
@@ -225,11 +229,12 @@ describe('get_finance_summary', () => {
 
 describe('get_business_snapshot', () => {
   it('integra el resumen general', async () => {
-    prismaMock.sale.findMany.mockResolvedValue([{ total: 150000, payments: [] }])
-    prismaMock.product.findMany.mockResolvedValue([
-      { name: 'Bajo', stock: 1, lowStockThreshold: 5, costPrice: 10000, salePrice: 20000, category: null },
+    prismaMock.sale.aggregate.mockResolvedValue({ _count: { id: 1 }, _sum: { total: 150000 } })
+    prismaMock.$queryRaw.mockResolvedValue([])
+    prismaMock.webOrder.groupBy.mockResolvedValue([
+      { status: 'PENDING', _count: { id: 1 } },
+      { status: 'CONFIRMED', _count: { id: 1 } },
     ])
-    prismaMock.webOrder.findMany.mockResolvedValue([{ status: 'PENDING' }, { status: 'CONFIRMED' }])
     prismaMock.client.count.mockResolvedValue(4)
     prismaMock.contactMessage.count.mockResolvedValue(2)
     prismaMock.product.count.mockResolvedValue(1)

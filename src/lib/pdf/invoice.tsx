@@ -172,12 +172,17 @@ function TotalRow({ label, value, valueStyle }: { label: string; value: string; 
 
 export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; settings?: PdfSettings }) {
   const company = resolveCompany(settings, sale.invoice)
+  const isGastronomy = settings?.sector === 'restaurant_gastronomy'
   const logo = getLogoDataUrl()
   const isCredit = sale.paymentMethod === 'CREDITO'
-  const footerText = company.footer || `${company.name} — Gracias por su compra`
+  const footerText = isGastronomy
+    ? 'De conformidad con la Ley 1935 de 2018, la propina es voluntaria (sugerida 10%). ¡Gracias por su visita!'
+    : (company.footer || `${company.name} — Gracias por su compra`)
 
   const baseGravable = Math.round((sale.total / 1.19) * 100) / 100
   const valorIva = Math.round((sale.total - baseGravable) * 100) / 100
+  const tipAmount = Math.round(sale.total * 0.1 * 100) / 100
+  const totalWithTip = Math.round((sale.total + tipAmount) * 100) / 100
   const cufe = generateCufe(
     sale.invoiceNumber,
     sale.saleDate,
@@ -222,7 +227,9 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
               </View>
             </View>
             <View style={styles.docBox}>
-              <Text style={styles.docLabel}>FACTURA DE VENTA</Text>
+              <Text style={styles.docLabel}>
+                {isGastronomy ? 'COMPROBANTE DE CONSUMO / FACTURA DE VENTA' : 'FACTURA DE VENTA'}
+              </Text>
               <Text style={styles.docNumber}>{sale.invoiceNumber}</Text>
               {isCancelled ? <Text style={styles.docVoid}>ANULADA</Text> : null}
             </View>
@@ -237,8 +244,13 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
           {/* 2. Importes y fechas clave */}
           <View style={styles.kvRow}>
             <KeyValue label="TOTAL A PAGAR" value={money(sale.total, currency)} strong />
-            <KeyValue label="FECHA DE EMISIÓN" value={formatShortDate(sale.saleDate)} />
-            <KeyValue label="VENCE" value={isCredit && sale.dueDate ? formatShortDate(sale.dueDate) : '—'} />
+            <KeyValue
+              label={isGastronomy ? 'FECHA DE CONSUMO' : 'FECHA DE EMISIÓN'}
+              value={formatShortDate(sale.saleDate)}
+            />
+            {!isGastronomy && (
+              <KeyValue label="VENCE" value={isCredit && sale.dueDate ? formatShortDate(sale.dueDate) : '—'} />
+            )}
             <KeyValue label="EMITIDA" value={formatTime(sale.saleDate)} />
           </View>
 
@@ -247,8 +259,10 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
           {/* 3. Destinatario y contacto */}
           <View style={styles.twoCol}>
             <View style={styles.col}>
-              <Label>FACTURAR A</Label>
-              <Text style={styles.bodyName}>{clientName.toUpperCase()}</Text>
+              <Label>{isGastronomy ? 'MESA / COMENSAL' : 'FACTURAR A'}</Label>
+              <Text style={styles.bodyName}>
+                {(isGastronomy ? (sale.client?.name || 'Mesa General / Consumidor Final') : clientName).toUpperCase()}
+              </Text>
               {sale.client?.phone ? <Text style={styles.bodyLine}>CC/NIT: {sale.client.phone}</Text> : null}
               {sale.client?.address ? <Text style={styles.bodyLine}>{sale.client.address}</Text> : null}
             </View>
@@ -256,7 +270,11 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
               <Label>CONTACTO</Label>
               <Text style={styles.bodyLine}>{sale.client?.phone || company.phone}</Text>
               {sale.client?.email ? <Text style={styles.bodyLine}>{sale.client.email}</Text> : null}
-              {sale.user?.name ? <Text style={styles.bodyLine}>Atendió {sale.user.name}</Text> : null}
+              {isGastronomy ? (
+                <Text style={styles.bodyLine}>Mesero / Atención: {sale.user?.name || 'Personal de Servicio'}</Text>
+              ) : sale.user?.name ? (
+                <Text style={styles.bodyLine}>Atendió {sale.user.name}</Text>
+              ) : null}
             </View>
           </View>
 
@@ -266,7 +284,9 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
           <View>
             <View style={styles.tableHead}>
               <Text style={[styles.th, styles.colIdx]}>#</Text>
-              <Text style={[styles.th, styles.colDesc]}>DESCRIPCIÓN DE BIENES O SERVICIOS</Text>
+              <Text style={[styles.th, styles.colDesc]}>
+                {isGastronomy ? 'PLATILLO / BEBIDA / CONSUMO' : 'DESCRIPCIÓN DE BIENES O SERVICIOS'}
+              </Text>
               <Text style={[styles.th, styles.colQty]}>CANT.</Text>
               <Text style={[styles.th, styles.colRate]}>V. UNITARIO</Text>
               <Text style={[styles.th, styles.colDisc]}>DESC.</Text>
@@ -293,14 +313,16 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
             <View style={styles.col}>
               <Label>FORMA DE PAGO</Label>
               <Text style={styles.bodyLine}>{getPaymentMethodLabel(sale.paymentMethod)}</Text>
-              {creditStatus ? <Text style={styles.bodyLine}>{getCreditStatusLabel(creditStatus)}</Text> : null}
-              {isCredit ? <Text style={styles.bodyLine}>Abonado {money(paid, currency)}</Text> : null}
+              {!isGastronomy && creditStatus ? (
+                <Text style={styles.bodyLine}>{getCreditStatusLabel(creditStatus)}</Text>
+              ) : null}
+              {!isGastronomy && isCredit ? <Text style={styles.bodyLine}>Abonado {money(paid, currency)}</Text> : null}
             </View>
 
             <View style={styles.col}>
               <Label>EN LETRAS</Label>
               <Text style={styles.bodyLine}>Son {formatCurrencyInWords(sale.total)}</Text>
-              {isCredit && balance > 0 ? (
+              {!isGastronomy && isCredit && balance > 0 ? (
                 <Text style={styles.bodyLine}>Saldo: {formatCurrencyInWords(balance)}</Text>
               ) : null}
             </View>
@@ -313,6 +335,23 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
                 <Text style={styles.grandLabel}>TOTAL</Text>
                 <Text style={styles.grandValue}>{money(sale.total, currency)}</Text>
               </View>
+              {isGastronomy && (
+                <>
+                  <TotalRow
+                    label="Propina voluntaria sugerida (10%)"
+                    value={money(tipAmount, currency)}
+                  />
+                  <View
+                    style={[
+                      styles.grandRow,
+                      { borderTopWidth: 1, borderTopColor: COLORS.slate300, marginTop: 4, paddingTop: 4 },
+                    ]}
+                  >
+                    <Text style={[styles.grandLabel, { fontSize: 7.5 }]}>TOTAL CON PROPINA SUGERIDA</Text>
+                    <Text style={[styles.grandValue, { fontSize: 11 }]}>{money(totalWithTip, currency)}</Text>
+                  </View>
+                </>
+              )}
             </View>
           </View>
 
@@ -326,8 +365,10 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
           {/* 6. Firmas */}
           <View style={styles.twoCol}>
             <View style={styles.col}>
-              <Label>ACEPTADO POR</Label>
-              <Text style={styles.bodyName}>{clientName}</Text>
+              <Label>{isGastronomy ? 'RECIBIDO POR' : 'ACEPTADO POR'}</Label>
+              <Text style={styles.bodyName}>
+                {isGastronomy ? (sale.client?.name || 'Mesa General / Consumidor Final') : clientName}
+              </Text>
             </View>
             <View style={styles.col}>
               <Label>FIRMA</Label>
@@ -335,6 +376,45 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
               <Text style={styles.bodyLine}>{company.name}</Text>
             </View>
           </View>
+
+          {/* Términos de garantía, políticas comerciales y nota legal */}
+          {isGastronomy ? (
+            <View
+              style={{
+                backgroundColor: COLORS.slate50,
+                padding: 6,
+                marginTop: 8,
+                marginBottom: 4,
+                borderWidth: 1,
+                borderColor: COLORS.slate200,
+              }}
+            >
+              <Text style={{ fontSize: 6.5, color: COLORS.slate800, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>
+                CONTROL DE CONSUMO & LEY DE PROPINAS
+              </Text>
+              <Text style={{ fontSize: 6, color: COLORS.slate600, lineHeight: 1.4 }}>
+                De conformidad con la Ley 1935 de 2018, la propina es voluntaria (sugerida 10%). Este documento constituye soporte de consumo / cuenta de cobro de mesa. ¡Gracias por su visita!
+              </Text>
+            </View>
+          ) : company.footer ? (
+            <View
+              style={{
+                backgroundColor: COLORS.slate50,
+                padding: 6,
+                marginTop: 8,
+                marginBottom: 4,
+                borderWidth: 1,
+                borderColor: COLORS.slate200,
+              }}
+            >
+              <Text style={{ fontSize: 6.5, color: COLORS.slate800, fontFamily: 'Helvetica-Bold', marginBottom: 2 }}>
+                TÉRMINOS, GARANTÍA & POLÍTICAS COMERCIALES
+              </Text>
+              <Text style={{ fontSize: 6, color: COLORS.slate600, lineHeight: 1.4 }}>
+                {company.footer}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.rule} />
 

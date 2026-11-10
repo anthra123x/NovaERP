@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useSyncExternalStore } from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { AiFloatingChat } from '@/components/assistant/ai-floating-chat'
@@ -23,19 +23,38 @@ interface DashboardLayoutProps {
 }
 
 const SIDEBAR_COLLAPSED_STORAGE_KEY = 'nova_sidebar_collapsed'
+const SIDEBAR_COLLAPSED_EVENT = 'nova_sidebar_collapsed_change'
+
+function subscribeSidebarCollapse(callback: () => void) {
+  window.addEventListener('storage', callback)
+  window.addEventListener(SIDEBAR_COLLAPSED_EVENT, callback)
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener(SIDEBAR_COLLAPSED_EVENT, callback)
+  }
+}
+
+function getSidebarCollapseSnapshot(): boolean {
+  try {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+function getSidebarCollapseServerSnapshot(): boolean {
+  return false
+}
 
 export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   useKeyboardShortcuts()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(() => {
-    if (typeof window === 'undefined') return false
-    try {
-      return localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY) === 'true'
-    } catch {
-      return false
-    }
-  })
+  const isCollapsed = useSyncExternalStore(
+    subscribeSidebarCollapse,
+    getSidebarCollapseSnapshot,
+    getSidebarCollapseServerSnapshot,
+  )
 
   // Detectar mobile para asegurar que en pantallas pequeñas el menú móvil no colapse a sólo iconos
   useEffect(() => {
@@ -61,15 +80,13 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   }, [])
 
   const toggleCollapse = () => {
-    setIsCollapsed((prev) => {
-      const next = !prev
-      try {
-        localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next))
-      } catch {
-        // Ignorar
-      }
-      return next
-    })
+    try {
+      const next = !getSidebarCollapseSnapshot()
+      localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next))
+      window.dispatchEvent(new Event(SIDEBAR_COLLAPSED_EVENT))
+    } catch {
+      // Ignorar acceso denegado a localStorage
+    }
   }
 
   return (
@@ -87,8 +104,8 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         className={cn(
           'fixed inset-y-3 left-3 z-50 transition-all duration-300 ease-in-out lg:static lg:inset-auto lg:my-3 lg:ml-3 lg:mr-2 lg:h-[calc(100dvh-1.5rem)] shrink-0',
           sidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1.5rem)] lg:translate-x-0',
-          !isMobile && isCollapsed ? 'w-16 lg:w-16' : 'w-64 lg:w-64',
-          isMobile && 'w-72',
+          'w-72 lg:w-64',
+          !isMobile && isCollapsed && 'lg:w-16',
         )}
       >
         <Sidebar

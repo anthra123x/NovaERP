@@ -35,6 +35,11 @@ export async function registerPayment(input: {
     const result = await prisma.$transaction(async (tx) => {
       const { saleId, amount, paymentMethod } = validatedFields.data
 
+      // Lock exclusivo sobre la venta para evitar race conditions y sobrepagos concurrentes
+      await tx.$queryRaw<Array<{ id: string }>>`
+        SELECT id FROM sales WHERE id = ${saleId} FOR UPDATE
+      `
+
       const sale = await tx.sale.findUnique({
         where: { id: saleId },
         select: { id: true, invoiceNumber: true, total: true, paymentMethod: true, status: true },

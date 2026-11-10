@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getBusinessWorkflow } from '@/lib/business-workflow'
 
 export function useKeyboardShortcuts() {
   const router = useRouter()
@@ -38,6 +39,10 @@ export function useKeyboardShortcuts() {
       // Alt + C: Cartera & Créditos
       if (e.altKey && e.key === 'c') {
         e.preventDefault()
+        const workflow = getBusinessWorkflow()
+        if (workflow.sector === 'restaurant_gastronomy' || !workflow.allowCreditSales) {
+          return
+        }
         router.push('/credits')
       }
 

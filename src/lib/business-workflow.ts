@@ -6,6 +6,7 @@ export type BusinessSector =
   | 'hardware_construction'
   | 'pharmacy_health'
   | 'services_workshop'
+  | 'restaurant_gastronomy'
 
 export type TaxRegime =
   | 'responsable_iva'
@@ -245,6 +246,74 @@ export const SECTOR_INFO: Record<BusinessSector, SectorProfile> = {
       primaryAction: 'Orden de Servicio',
       searchPlaceholder: 'Buscar servicios por descripción o código...',
     },
+  },
+  restaurant_gastronomy: {
+    title: 'Restaurantes, Cafeterías & Gastronomía',
+    description: 'Atención a comensales, servicio de mesa, bebidas, preparaciones y comandas rápidas.',
+    tag: 'GASTRONOMÍA',
+    defaultFooter:
+      'Propina voluntaria según ley 1935 de 2018 (sugerida 10%). Este documento constituye comprobante de consumo / cuenta de cobro de mesa.',
+    suggestedMargin: 45,
+    iconName: 'UtensilsCrossed',
+    features: [
+      'Atención en mesa y mostrador',
+      'Comprobante con propina voluntaria sugerida',
+      'Sin ventas a crédito',
+    ],
+    labels: {
+      singular: 'Plato / Preparación',
+      plural: 'Menú & Bebidas',
+      identifier: 'Código / Ref Menú',
+      identifierPlaceholder: 'Ej: PLT-01, BEB-MORA o COMBO-DIA',
+      unit: 'porciones/platos',
+      clientRole: 'Comensal / Mesa',
+      actionNew: 'Registrar Plato / Bebida',
+      primaryAction: 'Nueva Comanda / Venta',
+      searchPlaceholder: 'Buscar en el menú por plato, bebida, ingrediente o código...',
+    },
+  },
+}
+
+export const SECTOR_WORKFLOW_DEFAULTS: Record<BusinessSector, Partial<BusinessWorkflowConfig>> = {
+  retail_general: {
+    allowCreditSales: true,
+    barcodeContinuousScan: true,
+    defaultProfitMargin: 35,
+  },
+  technology_repair: {
+    allowCreditSales: true,
+    barcodeContinuousScan: true,
+    defaultProfitMargin: 40,
+  },
+  fashion_apparel: {
+    allowCreditSales: true,
+    barcodeContinuousScan: true,
+    defaultProfitMargin: 45,
+  },
+  grocery_supermarket: {
+    allowCreditSales: false,
+    barcodeContinuousScan: true,
+    defaultProfitMargin: 25,
+  },
+  hardware_construction: {
+    allowCreditSales: true,
+    barcodeContinuousScan: true,
+    defaultProfitMargin: 30,
+  },
+  pharmacy_health: {
+    allowCreditSales: true,
+    barcodeContinuousScan: true,
+    defaultProfitMargin: 30,
+  },
+  services_workshop: {
+    allowCreditSales: true,
+    barcodeContinuousScan: false,
+    defaultProfitMargin: 45,
+  },
+  restaurant_gastronomy: {
+    allowCreditSales: false,
+    barcodeContinuousScan: false,
+    defaultProfitMargin: 45,
   },
 }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ShoppingCart, Plus, Minus, Trash2, Search, ArrowLeft, Loader2, UserPlus, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,8 @@ import { toast } from 'sonner'
 import { getProducts } from '@/modules/inventory/inventory.actions'
 import { createSale } from '@/modules/sales/sales.actions'
 import { searchClients, createClient } from '@/modules/clients/clients.actions'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
+import { getBusinessWorkflowAction } from '@/modules/settings/settings.actions'
 
 interface ClientSuggestion {
   id: string
@@ -47,6 +49,26 @@ interface ProductOption {
 
 export default function NewCreditSalePage() {
   const router = useRouter()
+  const { config: workflow } = useBusinessWorkflow()
+  const isCreditDisabled = workflow.sector === 'restaurant_gastronomy' || !workflow.allowCreditSales
+
+  useEffect(() => {
+    // Redirección defensiva asíncrona consultando configuración en servidor
+    getBusinessWorkflowAction().then((res) => {
+      if (res.success && res.data) {
+        if (res.data.sector === 'restaurant_gastronomy' || !res.data.allowCreditSales) {
+          router.replace('/sales')
+        }
+      }
+    })
+  }, [router])
+
+  useEffect(() => {
+    if (isCreditDisabled) {
+      router.replace('/sales')
+    }
+  }, [isCreditDisabled, router])
+
   const [cart, setCart] = useState<CartItem[]>([])
   const [search, setSearch] = useState('')
   const [products, setProducts] = useState<ProductOption[]>([])
@@ -299,6 +321,10 @@ export default function NewCreditSalePage() {
     }
   }
 
+  if (isCreditDisabled) {
+    redirect('/sales')
+  }
+
   return (
     <div className="page-container py-6 space-y-6">
       <PageHeader
@@ -335,7 +361,7 @@ export default function NewCreditSalePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[420px] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[420px] overflow-y-auto">
                 {filteredProducts.map((product) => (
                   <button
                     key={product.id}

@@ -39,6 +39,7 @@ import {
   Wrench,
   HeartPulse,
   Briefcase,
+  UtensilsCrossed,
   Globe,
   Sliders,
   Sparkles,
@@ -117,6 +118,7 @@ const SECTOR_ICONS: Record<BusinessSector, React.ComponentType<{ className?: str
   hardware_construction: Wrench,
   pharmacy_health: HeartPulse,
   services_workshop: Briefcase,
+  restaurant_gastronomy: UtensilsCrossed,
 }
 
 export default function AdminPage() {
@@ -331,6 +333,9 @@ export default function AdminPage() {
       ...workflow,
       sector: sectorKey,
       defaultProfitMargin: info.suggestedMargin,
+      ...(sectorKey === 'restaurant_gastronomy'
+        ? { allowCreditSales: false, barcodeContinuousScan: false }
+        : {}),
     }
     setWorkflow(updatedWorkflow)
     saveBusinessWorkflow(updatedWorkflow)
@@ -1508,7 +1513,7 @@ export default function AdminPage() {
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="rounded-2xl border border-border/70 overflow-hidden">
+              <div className="rounded-2xl border border-border/70 overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50 text-xs font-semibold">

@@ -5,6 +5,7 @@ const prismaMocks = vi.hoisted(() => ({
   client: { findFirst: vi.fn(), create: vi.fn() },
   product: { updateMany: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
   stockMovement: { create: vi.fn() },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(),
 }))
 
@@ -14,6 +15,7 @@ vi.mock('@/lib/prisma', () => ({
     client: prismaMocks.client,
     product: prismaMocks.product,
     stockMovement: prismaMocks.stockMovement,
+    $queryRaw: prismaMocks.$queryRaw,
     $transaction: prismaMocks.$transaction,
   },
 }))
@@ -35,6 +37,8 @@ const tx = () => ({
   product: prismaMocks.product,
   stockMovement: prismaMocks.stockMovement,
   webOrder: prismaMocks.webOrder,
+  client: prismaMocks.client,
+  $queryRaw: prismaMocks.$queryRaw,
 })
 
 const order = (status: 'PENDING' | 'CONFIRMED' | 'CONVERTED' | 'CANCELLED' = 'PENDING') => ({
@@ -53,6 +57,8 @@ const order = (status: 'PENDING' | 'CONFIRMED' | 'CONVERTED' | 'CANCELLED' = 'PE
 describe('convertWebOrderToSale', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    prismaMocks.$transaction.mockImplementation(async (cb: (t: ReturnType<typeof tx>) => unknown) => cb(tx()))
+    prismaMocks.$queryRaw.mockResolvedValue([{ id: 'order-1', status: 'PENDING' }])
     prismaMocks.webOrder.findUnique.mockResolvedValue(order())
     prismaMocks.client.findFirst.mockResolvedValue(null)
     prismaMocks.client.create.mockResolvedValue({ id: 'client-1' })
@@ -82,6 +88,7 @@ describe('convertWebOrderToSale', () => {
   })
 
   it('does not decrement stock again when the order was CONFIRMED', async () => {
+    prismaMocks.$queryRaw.mockResolvedValue([{ id: 'order-1', status: 'CONFIRMED' }])
     prismaMocks.webOrder.findUnique.mockResolvedValue(order('CONFIRMED'))
 
     await convertWebOrderToSale('order-1')
@@ -100,6 +107,7 @@ describe('convertWebOrderToSale', () => {
   })
 
   it('refuses to convert an order that is not pending or confirmed', async () => {
+    prismaMocks.$queryRaw.mockResolvedValue([{ id: 'order-1', status: 'CONVERTED' }])
     prismaMocks.webOrder.findUnique.mockResolvedValue(order('CONVERTED'))
 
     const result = await convertWebOrderToSale('order-1')

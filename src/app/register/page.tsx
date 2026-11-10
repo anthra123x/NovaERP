@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo, useEffect } from 'react'
+import { useState, useRef, useMemo, useEffect, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -22,6 +22,7 @@ import {
   Wrench,
   HeartPulse,
   Briefcase,
+  UtensilsCrossed,
   Upload,
   Trash2,
   CheckCircle2,
@@ -44,8 +45,17 @@ import {
   Package,
   HandCoins,
   Zap,
+  Sun,
+  Moon,
 } from 'lucide-react'
 import { toast } from 'sonner'
+import {
+  saveUserPreferences,
+  subscribePreferences,
+  getThemeSnapshot,
+  getThemeServerSnapshot,
+  type ThemeMode,
+} from '@/lib/user-preferences'
 
 const SECTOR_ICONS: Record<BusinessSector, React.ComponentType<{ className?: string }>> = {
   retail_general: Store,
@@ -55,6 +65,7 @@ const SECTOR_ICONS: Record<BusinessSector, React.ComponentType<{ className?: str
   hardware_construction: Wrench,
   pharmacy_health: HeartPulse,
   services_workshop: Briefcase,
+  restaurant_gastronomy: UtensilsCrossed,
 }
 
 const SAMPLE_SECTOR_ITEMS: Record<BusinessSector, { name: string; sku: string; price: number; detail: string }> = {
@@ -99,6 +110,12 @@ const SAMPLE_SECTOR_ITEMS: Record<BusinessSector, { name: string; sku: string; p
     sku: 'SRV-0491',
     price: 150000,
     detail: 'Orden de servicio #0491 &bull; Informe técnico',
+  },
+  restaurant_gastronomy: {
+    name: 'Menú Ejecutivo del Día + Bebida',
+    sku: 'GAS-0491',
+    price: 24000,
+    detail: 'Plato del chef • Bebida natural • Servicio a la mesa',
   },
 }
 
@@ -178,6 +195,15 @@ const SECTOR_METRICS: Record<
     portfolioAmount: '$8.750.000',
     portfolioDetail: 'Anticipos recibidos',
   },
+  restaurant_gastronomy: {
+    salesAmount: '$21.350.000',
+    salesChange: '+14.8% vs ayer',
+    salesNote: '168 comandas despachadas',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Menú digital y mostrador',
+    portfolioAmount: '$0',
+    portfolioDetail: 'Sin ventas a crédito',
+  },
 }
 
 const LIVE_ACTIVITY_EVENTS = [
@@ -211,6 +237,12 @@ export default function RegisterPage() {
   const [companyCity, setCompanyCity] = useState('')
   const [companyPhone, setCompanyPhone] = useState('')
   const [currency, setCurrency] = useState('COP')
+  const theme = useSyncExternalStore(subscribePreferences, getThemeSnapshot, getThemeServerSnapshot)
+
+  function toggleTheme() {
+    const nextTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark'
+    saveUserPreferences({ theme: nextTheme })
+  }
 
   // Rotador de eventos en vivo para dinamismo del showcase
   useEffect(() => {
@@ -367,10 +399,10 @@ export default function RegisterPage() {
       />
 
       {/* Luces ambientales dinámicas flotantes con movimiento visible de un punto a otro (Glow verde esmeralda y cian) */}
-      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[90px] pointer-events-none animate-ambient-glow-1 bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
-      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[100px] pointer-events-none animate-ambient-glow-2 bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
-      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[110px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[120px] pointer-events-none animate-ambient-shine bg-emerald-500/20 dark:bg-emerald-400/12" />
+      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-glow-1 motion-reduce:animate-none bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
+      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-glow-2 motion-reduce:animate-none bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
+      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-wander motion-reduce:animate-none bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-shine motion-reduce:animate-none bg-emerald-500/20 dark:bg-emerald-400/12" />
 
       {/* Contenedor Principal Centrado (Composición flotante con márgenes cómodos alrededor, sin estirarse a toda la pantalla) */}
       <div className="relative z-10 w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col items-center justify-center my-auto">
@@ -581,15 +613,25 @@ export default function RegisterPage() {
                   </h2>
                 </div>
 
-                {/* Micro-puntos de progreso */}
-                <div className="flex items-center gap-1.5">
-                  {[1, 2, 3].map((s) => (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => {
-                        if (s < step) setStep(s as 1 | 2 | 3)
-                      }}
+                {/* Micro-puntos de progreso y selector de tema */}
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={toggleTheme}
+                    className="p-1.5 rounded-xl border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                    title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                    aria-label="Cambiar tema visual"
+                  >
+                    {theme === 'dark' ? <Sun className="h-3.5 w-3.5 text-amber-400" /> : <Moon className="h-3.5 w-3.5 text-slate-700" />}
+                  </button>
+                  <div className="flex items-center gap-1.5">
+                    {[1, 2, 3].map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => {
+                          if (s < step) setStep(s as 1 | 2 | 3)
+                        }}
                       disabled={s > step}
                       title={`Ir al paso ${s}`}
                       className={`h-2 rounded-full transition-all duration-300 ${
@@ -603,6 +645,7 @@ export default function RegisterPage() {
                   ))}
                 </div>
               </div>
+            </div>
 
               {/* ======================================================== */}
               {/* PASO 1: CUENTA DE ADMINISTRADOR                          */}

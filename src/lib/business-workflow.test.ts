@@ -1,10 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   SECTOR_INFO,
+  SECTOR_WORKFLOW_DEFAULTS,
   getSectorProfile,
   DEFAULT_BUSINESS_WORKFLOW,
   type BusinessSector,
 } from './business-workflow'
+import { BusinessSectorSchema } from './validations'
 
 describe('business-workflow - Adaptive Sector Engine', () => {
   const allSectors: BusinessSector[] = [
@@ -15,9 +17,10 @@ describe('business-workflow - Adaptive Sector Engine', () => {
     'hardware_construction',
     'pharmacy_health',
     'services_workshop',
+    'restaurant_gastronomy',
   ]
 
-  it('debe definir perfiles completos para los 7 sectores soportados', () => {
+  it('debe definir perfiles completos para los 8 sectores soportados', () => {
     for (const sector of allSectors) {
       const profile = SECTOR_INFO[sector]
       expect(profile).toBeDefined()
@@ -38,6 +41,43 @@ describe('business-workflow - Adaptive Sector Engine', () => {
       expect(profile.labels.primaryAction).toBeTruthy()
       expect(profile.labels.searchPlaceholder).toBeTruthy()
     }
+  })
+
+  it('debe retornar el perfil específico de gastronomía y restaurantes con propina legal', () => {
+    const profile = getSectorProfile('restaurant_gastronomy')
+    expect(profile.tag).toBe('GASTRONOMÍA')
+    expect(profile.title).toBe('Restaurantes, Cafeterías & Gastronomía')
+    expect(profile.description).toBe(
+      'Atención a comensales, servicio de mesa, bebidas, preparaciones y comandas rápidas.',
+    )
+    expect(profile.iconName).toBe('UtensilsCrossed')
+    expect(profile.suggestedMargin).toBe(45)
+    expect(profile.features).toContain('Sin ventas a crédito')
+    expect(profile.features).toContain('Comprobante con propina voluntaria sugerida')
+    expect(profile.defaultFooter).toContain('ley 1935 de 2018')
+    expect(profile.labels.singular).toBe('Plato / Preparación')
+    expect(profile.labels.plural).toBe('Menú & Bebidas')
+    expect(profile.labels.identifier).toBe('Código / Ref Menú')
+    expect(profile.labels.clientRole).toBe('Comensal / Mesa')
+    expect(profile.labels.primaryAction).toBe('Nueva Comanda / Venta')
+    expect(profile.labels.actionNew).toBe('Registrar Plato / Bebida')
+  })
+
+  it('debe definir defaults de workflow por sector desactivando créditos en restaurantes y supermercados', () => {
+    expect(SECTOR_WORKFLOW_DEFAULTS.restaurant_gastronomy.allowCreditSales).toBe(false)
+    expect(SECTOR_WORKFLOW_DEFAULTS.restaurant_gastronomy.barcodeContinuousScan).toBe(false)
+    expect(SECTOR_WORKFLOW_DEFAULTS.grocery_supermarket.allowCreditSales).toBe(false)
+    expect(SECTOR_WORKFLOW_DEFAULTS.services_workshop.barcodeContinuousScan).toBe(false)
+    expect(SECTOR_WORKFLOW_DEFAULTS.retail_general.allowCreditSales).toBe(true)
+  })
+
+  it('BusinessSectorSchema debe validar satisfactoriamente los 8 sectores', () => {
+    for (const sector of allSectors) {
+      const parsed = BusinessSectorSchema.safeParse(sector)
+      expect(parsed.success).toBe(true)
+    }
+    const invalid = BusinessSectorSchema.safeParse('sector_invalido')
+    expect(invalid.success).toBe(false)
   })
 
   it('debe retornar el perfil específico de tecnología y reparación', () => {

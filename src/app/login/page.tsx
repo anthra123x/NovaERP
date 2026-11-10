@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,16 @@ import {
   Package,
   Receipt,
   HandCoins,
+  Sun,
+  Moon,
 } from 'lucide-react'
+import {
+  saveUserPreferences,
+  subscribePreferences,
+  getThemeSnapshot,
+  getThemeServerSnapshot,
+  type ThemeMode,
+} from '@/lib/user-preferences'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -35,6 +44,13 @@ export default function LoginPage() {
   const [recoveryLoading, setRecoveryLoading] = useState(false)
   const [recoveryMessage, setRecoveryMessage] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+
+  const theme = useSyncExternalStore(subscribePreferences, getThemeSnapshot, getThemeServerSnapshot)
+
+  function toggleTheme() {
+    const nextTheme: ThemeMode = theme === 'dark' ? 'light' : 'dark'
+    saveUserPreferences({ theme: nextTheme })
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -106,10 +122,10 @@ export default function LoginPage() {
       />
 
       {/* Luces ambientales dinámicas flotantes con movimiento visible de un punto a otro (Glow verde esmeralda y cian) */}
-      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[90px] pointer-events-none animate-ambient-glow-1 bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
-      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[100px] pointer-events-none animate-ambient-glow-2 bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
-      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[110px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[120px] pointer-events-none animate-ambient-shine bg-emerald-500/20 dark:bg-emerald-400/12" />
+      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-glow-1 motion-reduce:animate-none bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
+      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-glow-2 motion-reduce:animate-none bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
+      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-wander motion-reduce:animate-none bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[48px] sm:blur-[72px] pointer-events-none animate-ambient-shine motion-reduce:animate-none bg-emerald-500/20 dark:bg-emerald-400/12" />
 
 
       {/* Contenedor principal */}
@@ -315,9 +331,20 @@ export default function LoginPage() {
               ) : (
                 /* Vista Principal de Login */
                 <div className="space-y-5 animate-fade-in">
-                  <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight text-foreground">Iniciar sesión</h2>
-                    <p className="text-xs text-muted-foreground">Ingresa tus credenciales para acceder a Nova ERP</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="space-y-1">
+                      <h2 className="text-2xl font-bold tracking-tight text-foreground">Iniciar sesión</h2>
+                      <p className="text-xs text-muted-foreground">Ingresa tus credenciales para acceder a Nova ERP</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={toggleTheme}
+                      className="p-2.5 rounded-2xl border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 cursor-pointer shadow-2xs hover:scale-105 active:scale-95 shrink-0"
+                      title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+                      aria-label="Cambiar tema visual"
+                    >
+                      {theme === 'dark' ? <Sun className="h-4 w-4 text-amber-400" /> : <Moon className="h-4 w-4 text-slate-700" />}
+                    </button>
                   </div>
 
                   <form onSubmit={handleSubmit} className="space-y-4">

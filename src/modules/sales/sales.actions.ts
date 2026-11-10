@@ -8,6 +8,7 @@ import { safeServerAction, type ServerActionResult } from '@/lib/safe-actions'
 import { parseDateInput } from '@/lib/labels'
 import { resolveSaleUnitPrice, resolveSalesIncomeCategory } from './sales.helpers'
 import { revalidateSalePaths } from '@/lib/revalidation'
+import { getBusinessWorkflowConfig } from '@/modules/settings/settings.service'
 import type { Prisma } from '@prisma/client'
 
 type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>
@@ -48,9 +49,15 @@ export async function createSale(data: {
   }
 
   return safeServerAction(async () => {
+    const workflow = await getBusinessWorkflowConfig()
+    const { items, clientId, discount, paymentMethod, initialPayment, initialPaymentMethod, dueDate, installments } =
+      validatedFields.data
+
+    if (paymentMethod === 'CREDITO' && (!workflow.allowCreditSales || workflow.sector === 'restaurant_gastronomy')) {
+      throw new ValidationError('Las ventas a crédito están deshabilitadas para este sector o configuración comercial')
+    }
+
     const result = await prisma.$transaction(async (tx) => {
-      const { items, clientId, discount, paymentMethod, initialPayment, initialPaymentMethod, dueDate, installments } =
-        validatedFields.data
 
       // Validate stock for all items
       const productIds = items.map((i) => i.productId)
@@ -70,19 +77,29 @@ export async function createSale(data: {
         }
       }
 
-      // Get next invoice number. El row lock serializa la numeración entre
-      // transacciones concurrentes (evita facturas duplicadas por lost update).
+      // Get next invoice number. Incremento atómico en PostgreSQL sin bloqueo de fila FOR UPDATE prolongado.
       let settings = await tx.systemSettings.findFirst()
       if (!settings) {
         settings = await tx.systemSettings.create({ data: {} })
       }
 
-      await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM system_settings WHERE id = ${settings.id} FOR UPDATE`
+      const counterRows = await tx.$queryRaw<
+        Array<{
+          num: number | bigint
+          invoicePrefix: string
+        }>
+      >`
+        UPDATE system_settings
+        SET "nextInvoiceNumber" = "nextInvoiceNumber" + 1
+        WHERE id = ${settings.id}
+        RETURNING
+          ("nextInvoiceNumber" - 1)::integer AS num,
+          "invoicePrefix"
+      `
 
-      // Re-lee el contador fresco tras adquirir el lock.
-      settings = await tx.systemSettings.findUniqueOrThrow({ where: { id: settings.id } })
-
-      const invoiceNumber = `${settings.invoicePrefix}${settings.nextInvoiceNumber}`
+      const assignedNumber = counterRows[0]?.num != null ? Number(counterRows[0].num) : settings.nextInvoiceNumber
+      const prefix = counterRows[0]?.invoicePrefix ?? settings.invoicePrefix
+      const invoiceNumber = `${prefix}${assignedNumber}`
 
       // Calculate totals
       let subtotal = 0
@@ -110,6 +127,11 @@ export async function createSale(data: {
 
       // Validaciones para ventas a crédito
       if (paymentMethod === 'CREDITO') {
+        if (!workflow.allowCreditSales || workflow.sector === 'restaurant_gastronomy') {
+          throw new ValidationError(
+            'Las ventas a crédito están deshabilitadas para este sector o configuración comercial',
+          )
+        }
         if (initialPayment > total) {
           throw new ValidationError('El abono inicial no puede superar el total de la venta')
         }
@@ -240,11 +262,6 @@ export async function createSale(data: {
         })
       }
 
-      // Increment invoice number (usando el valor fresco leído tras el lock)
-      await tx.systemSettings.update({
-        where: { id: settings.id },
-        data: { nextInvoiceNumber: settings.nextInvoiceNumber + 1 },
-      })
 
       return sale
     })

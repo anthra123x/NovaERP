@@ -204,6 +204,14 @@ describe('classifyBusinessSector', () => {
     expect(result.matches).toContain('mecanico')
   })
 
+  it('correctly classifies a restaurant or gastronomy business', () => {
+    const result = classifyBusinessSector('Restaurante y cafetería con servicio a la mesa, menú del día, platos y bebidas')
+    expect(result.sector).toBe('restaurant_gastronomy')
+    expect(result.matches).toContain('restaurante')
+    expect(result.matches).toContain('cafeteria')
+    expect(result.matches).toContain('platos')
+  })
+
   it('defaults to retail_general when no specific industry keywords match', () => {
     const result = classifyBusinessSector('Empresa comercial de ventas y distribución general')
     expect(result.sector).toBe('retail_general')
@@ -237,6 +245,19 @@ describe('autoConfigureBusinessWithAi', () => {
         value: expect.objectContaining({ sector: 'hardware_construction' }),
       }),
     })
+  })
+
+  it('automatically configures restaurant_gastronomy setting allowCreditSales to false', async () => {
+    const result = await autoConfigureBusinessWithAi('Restaurante La Casona, comida típica, platos a la carta y bebidas')
+
+    expect(result.sector).toBe('restaurant_gastronomy')
+    expect(result.sectorTag).toBe('GASTRONOMÍA')
+    expect(result.suggestedMargin).toBe(45)
+    expect(result.workflow.allowCreditSales).toBe(false)
+    expect(result.workflow.barcodeContinuousScan).toBe(false)
+    expect(result.categoriesCreated).toEqual(
+      expect.arrayContaining(['Entradas & Aperitivos', 'Platos Fuertes & Especialidades']),
+    )
   })
 })
 

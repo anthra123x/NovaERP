@@ -1,0 +1,4 @@
+# Excluir documentacion interna del agente del despliegue de produccion
+src/**/README.md
+.agents/
+load-tests/

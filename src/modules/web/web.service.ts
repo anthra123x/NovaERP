@@ -259,17 +259,22 @@ export async function createWebOrder(input: WebOrderInput) {
   const total = items.reduce((sum, item) => sum + item.total, 0)
 
   return await prisma.$transaction(async (tx) => {
-    // Row lock: serializa la numeración ORD-XXXX entre pedidos concurrentes.
+    // Incremento atómico en PostgreSQL: elimina el row lock FOR UPDATE global sobre system_settings.
     let settings = await tx.systemSettings.findFirst()
     if (!settings) {
       settings = await tx.systemSettings.create({ data: {} })
     }
 
-    await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM system_settings WHERE id = ${settings.id} FOR UPDATE`
+    const counterRows = await tx.$queryRaw<Array<{ num: number | bigint }>>`
+      UPDATE system_settings
+      SET "nextWebOrderNumber" = "nextWebOrderNumber" + 1
+      WHERE id = ${settings.id}
+      RETURNING ("nextWebOrderNumber" - 1)::integer AS num
+    `
 
-    // Re-lee el contador fresco tras adquirir el lock.
-    settings = await tx.systemSettings.findUniqueOrThrow({ where: { id: settings.id } })
-    const reference = `ORD-${settings.nextWebOrderNumber}`
+    const assignedNumber =
+      counterRows[0]?.num != null ? Number(counterRows[0].num) : settings.nextWebOrderNumber
+    const reference = `ORD-${assignedNumber}`
 
     const order = await tx.webOrder.create({
       data: {
@@ -283,11 +288,6 @@ export async function createWebOrder(input: WebOrderInput) {
         items: { create: items },
       },
       include: { items: true },
-    })
-
-    await tx.systemSettings.update({
-      where: { id: settings.id },
-      data: { nextWebOrderNumber: settings.nextWebOrderNumber + 1 },
     })
 
     return order

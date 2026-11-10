@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma'
-import { getClientStats } from '@/modules/clients/clients.actions'
 
 export interface DashboardOverview {
   salesToday: {
@@ -74,16 +73,17 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
   const now = new Date()
   const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0)
   const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
-
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0)
+  const sixMonthsAgoStart = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+  const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
 
   const [
     salesTodayData,
-    salesTodayItems,
+    profitTodayRaw,
     salesMonthData,
     incomeTodaySales,
     incomeTodayPayments,
-    creditSales,
+    creditSummaryRaw,
     webOrdersPendingCount,
     webOrdersPendingSum,
     webPendingList,
@@ -91,10 +91,11 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
     lowStockTotalCountRaw,
     outOfStockCount,
     totalProducts,
-    clientStats,
+    totalClients,
+    newClientsThisMonth,
     recentSales,
     salesByMonthData,
-    topItemsGroup,
+    topProductsRaw,
     salesByPayment,
   ] = await Promise.all([
     // 1. Ventas de hoy
@@ -103,18 +104,17 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
       _count: { id: true },
       _sum: { total: true },
     }),
-    // 2. Items vendidos hoy para calcular ganancia y margen real
-    prisma.saleItem.findMany({
-      where: {
-        sale: { status: 'COMPLETED', saleDate: { gte: startOfDay, lte: endOfDay } },
-      },
-      select: {
-        quantity: true,
-        unitPrice: true,
-        total: true,
-        product: { select: { costPrice: true } },
-      },
-    }),
+    // 2. Ganancia real de hoy calculada directamente en SQL
+    prisma.$queryRaw<Array<{ profit: number }>>`
+      SELECT
+        COALESCE(SUM(si.total - (COALESCE(p."costPrice", 0) * si.quantity)), 0)::float AS profit
+      FROM sale_items si
+      JOIN sales s ON s.id = si."saleId"
+      LEFT JOIN products p ON p.id = si."productId"
+      WHERE s.status = 'COMPLETED'
+        AND s."saleDate" >= ${startOfDay}
+        AND s."saleDate" <= ${endOfDay}
+    `,
     // 3. Ventas del mes actual
     prisma.sale.aggregate({
       where: { status: 'COMPLETED', saleDate: { gte: startOfMonth } },
@@ -135,15 +135,21 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
       where: { paymentDate: { gte: startOfDay, lte: endOfDay } },
       _sum: { amount: true },
     }),
-    // 6. Ventas a crédito para cálculo de cartera pendiente
-    prisma.sale.findMany({
-      where: { paymentMethod: 'CREDITO', status: 'COMPLETED' },
-      select: {
-        clientId: true,
-        total: true,
-        payments: { select: { amount: true } },
-      },
-    }),
+    // 6. Cartera a crédito pendiente agregada en SQL (sin descargar historial completo a RAM)
+    prisma.$queryRaw<Array<{ pendingTotal: number; debtorCount: number }>>`
+      SELECT
+        COALESCE(SUM(s.total - COALESCE(p.paid, 0)), 0)::float AS "pendingTotal",
+        COUNT(DISTINCT s."clientId")::int AS "debtorCount"
+      FROM sales s
+      LEFT JOIN (
+        SELECT "saleId", SUM(amount) AS paid
+        FROM payments
+        GROUP BY "saleId"
+      ) p ON p."saleId" = s.id
+      WHERE s."paymentMethod" = 'CREDITO'
+        AND s.status = 'COMPLETED'
+        AND (s.total - COALESCE(p.paid, 0)) > 0.005
+    `,
     // 7. Pedidos web pendientes (conteo)
     prisma.webOrder.count({
       where: { status: 'PENDING' },
@@ -189,8 +195,14 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
     }),
     // 13. Total productos activos en catálogo
     prisma.product.count({ where: { deletedAt: null } }),
-    // 14. Estadísticas de clientes
-    getClientStats().catch(() => ({ totalClients: 0, newClientsThisMonth: 0 })),
+    // 14. Estadísticas de clientes optimizadas (conteos directos sin traer compras a memoria)
+    prisma.client.count({ where: { deletedAt: null } }),
+    prisma.client.count({
+      where: {
+        deletedAt: null,
+        createdAt: { gte: startOfMonth },
+      },
+    }),
     // 15. Ventas recientes
     prisma.sale.findMany({
       take: 7,
@@ -205,30 +217,34 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
         client: { select: { id: true, name: true } },
       },
     }),
-    // 16. Ventas por mes (últimos 6 meses)
-    prisma.sale.findMany({
-      where: {
-        status: 'COMPLETED',
-        saleDate: {
-          gte: new Date(now.getFullYear(), now.getMonth() - 5, 1),
-        },
-      },
-      select: { saleDate: true, total: true },
-      orderBy: { saleDate: 'asc' },
-    }),
-    // 17. Top productos más vendidos (últimos 30 días)
-    prisma.saleItem.groupBy({
-      by: ['productId'],
-      where: {
-        sale: {
-          status: 'COMPLETED',
-          saleDate: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-        },
-      },
-      _sum: { quantity: true, total: true },
-      orderBy: { _sum: { quantity: 'desc' } },
-      take: 6,
-    }),
+    // 16. Ventas por mes agregadas en SQL (últimos 6 meses)
+    prisma.$queryRaw<Array<{ month: string; total: number; count: number }>>`
+      SELECT
+        to_char(date_trunc('month', "saleDate"), 'YYYY-MM') AS month,
+        COALESCE(SUM(total), 0)::float AS total,
+        COUNT(*)::int AS count
+      FROM sales
+      WHERE status = 'COMPLETED'
+        AND "saleDate" >= ${sixMonthsAgoStart}
+      GROUP BY date_trunc('month', "saleDate")
+      ORDER BY month ASC
+    `,
+    // 17. Top productos más vendidos con nombre resuelto en SQL (últimos 30 días)
+    prisma.$queryRaw<Array<{ productId: string; name: string; quantity: number; total: number }>>`
+      SELECT
+        si."productId",
+        COALESCE(p.name, 'Producto desconocido') AS name,
+        COALESCE(SUM(si.quantity), 0)::int AS quantity,
+        COALESCE(SUM(si.total), 0)::float AS total
+      FROM sale_items si
+      JOIN sales s ON s.id = si."saleId"
+      LEFT JOIN products p ON p.id = si."productId"
+      WHERE s.status = 'COMPLETED'
+        AND s."saleDate" >= ${thirtyDaysAgo}
+      GROUP BY si."productId", p.name
+      ORDER BY quantity DESC
+      LIMIT 6
+    `,
     // 18. Ventas por método de pago
     prisma.sale.groupBy({
       by: ['paymentMethod'],
@@ -245,28 +261,16 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
   const averageTicketToday = salesCountToday > 0 ? Math.round(salesTotalToday / salesCountToday) : 0
 
   // Margen de ganancia hoy
-  let profitToday = 0
-  for (const item of salesTodayItems) {
-    const cost = (item.product?.costPrice ?? 0) * item.quantity
-    profitToday += item.total - cost
-  }
+  const profitToday = Number(profitTodayRaw[0]?.profit ?? 0)
   const cleanProfitToday = Math.max(0, profitToday)
   const profitMarginPercent = salesTotalToday > 0 ? Math.round((cleanProfitToday / salesTotalToday) * 100) : 0
 
   // Ingreso total recibido hoy en caja
   const incomeToday = (incomeTodaySales._sum.total ?? 0) + (incomeTodayPayments._sum.amount ?? 0)
 
-  // Saldo de créditos pendientes y clientes morosos
-  const debtors = new Set<string>()
-  let pendingCreditTotal = 0
-  for (const s of creditSales) {
-    const paid = s.payments.reduce((acc, p) => acc + p.amount, 0)
-    const remaining = s.total - paid
-    if (remaining > 0) {
-      pendingCreditTotal += remaining
-      if (s.clientId) debtors.add(s.clientId)
-    }
-  }
+  // Saldo de créditos pendientes y clientes con deuda
+  const pendingCreditTotal = Number(creditSummaryRaw[0]?.pendingTotal ?? 0)
+  const pendingCreditClientsCount = Number(creditSummaryRaw[0]?.debtorCount ?? 0)
 
   // Mapeo mensual continuo (6 meses consecutivos)
   const monthlyMap: Record<string, { month: string; total: number; count: number }> = {}
@@ -276,28 +280,19 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
     monthlyMap[key] = { month: key, total: 0, count: 0 }
   }
   for (const s of salesByMonthData) {
-    const d = new Date(s.saleDate)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    if (monthlyMap[key]) {
-      monthlyMap[key].total += s.total
-      monthlyMap[key].count += 1
+    if (monthlyMap[s.month]) {
+      monthlyMap[s.month].total = Number(s.total)
+      monthlyMap[s.month].count = Number(s.count)
     }
   }
   const salesByMonth = Object.values(monthlyMap)
 
-  // Mapeo top productos con nombres reales
-  const topProductIds = topItemsGroup.map((t) => t.productId)
-  const productNames = await prisma.product.findMany({
-    where: { id: { in: topProductIds } },
-    select: { id: true, name: true },
-  })
-  const productNameMap = new Map(productNames.map((p) => [p.id, p.name]))
-
-  const topProducts = topItemsGroup.map((item) => ({
+  // Mapeo top productos
+  const topProducts = topProductsRaw.map((item) => ({
     productId: item.productId,
-    quantity: item._sum.quantity ?? 0,
-    total: item._sum.total ?? 0,
-    name: productNameMap.get(item.productId) ?? 'Producto desconocido',
+    quantity: Number(item.quantity ?? 0),
+    total: Number(item.total ?? 0),
+    name: item.name ?? 'Producto desconocido',
   }))
 
   const realLowStockCount = Number(lowStockTotalCountRaw[0]?.count ?? lowStockList.length)
@@ -316,7 +311,7 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
     },
     incomeToday,
     pendingCreditTotal,
-    pendingCreditClientsCount: debtors.size,
+    pendingCreditClientsCount,
     webOrdersSummary: {
       pendingCount: webOrdersPendingCount,
       pendingOrdersTotal: webOrdersPendingSum._sum.total ?? 0,
@@ -329,8 +324,8 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
       lowStockProducts: lowStockList,
     },
     clientStats: {
-      totalClients: clientStats?.totalClients ?? 0,
-      newClientsThisMonth: clientStats?.newClientsThisMonth ?? 0,
+      totalClients: totalClients ?? 0,
+      newClientsThisMonth: newClientsThisMonth ?? 0,
     },
     recentSales,
     salesByPayment: salesByPayment as Array<{

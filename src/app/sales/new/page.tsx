@@ -91,10 +91,10 @@ export default function NewSalePage() {
 
   // Desactivar crédito si la política del negocio lo prohíbe
   useEffect(() => {
-    if (!workflow.allowCreditSales && paymentMethod === 'CREDITO') {
+    if ((!workflow.allowCreditSales || workflow.sector === 'restaurant_gastronomy') && paymentMethod === 'CREDITO') {
       setPaymentMethod('CASH')
     }
-  }, [workflow.allowCreditSales, paymentMethod])
+  }, [workflow.allowCreditSales, workflow.sector, paymentMethod])
 
   useEffect(() => {
     loadProducts()
@@ -263,7 +263,7 @@ export default function NewSalePage() {
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0), [cart])
   const total = subtotal - discount
-  const isCredit = paymentMethod === 'CREDITO'
+  const isCredit = paymentMethod === 'CREDITO' && workflow.allowCreditSales && workflow.sector !== 'restaurant_gastronomy'
   const installmentsSum = installments.reduce((s, i) => s + (i.amount || 0), 0)
   const remainingAfterPlan = total - initialPayment - installmentsSum
 
@@ -291,7 +291,7 @@ export default function NewSalePage() {
       })
       return
     }
-    if (!workflow.allowCreditSales && isCredit) {
+    if ((!workflow.allowCreditSales || workflow.sector === 'restaurant_gastronomy') && (isCredit || paymentMethod === 'CREDITO')) {
       toast.error('Crédito no disponible', {
         description: 'Las ventas a crédito están desactivadas para este negocio.',
       })
@@ -416,9 +416,11 @@ export default function NewSalePage() {
                     }
                   }}
                   placeholder={
-                    workflow.barcodeContinuousScan
-                      ? `Escanear ${profile.labels.identifier.toLowerCase()} o escribir nombre...`
-                      : profile.labels.searchPlaceholder
+                    workflow.sector === 'restaurant_gastronomy'
+                      ? profile.labels.searchPlaceholder
+                      : workflow.barcodeContinuousScan
+                        ? `Escanear ${profile.labels.identifier.toLowerCase()} o escribir nombre...`
+                        : profile.labels.searchPlaceholder
                   }
                   className="pl-9"
                 />
@@ -489,7 +491,7 @@ export default function NewSalePage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center justify-between">
-                <span>Cliente</span>
+                <span>{profile.labels.clientRole || 'Cliente'}</span>
                 {workflow.requireClientOnSale ? (
                   <Badge variant="outline" className="text-[11px] border-amber-500/50 text-amber-400">
                     Obligatorio
@@ -521,7 +523,11 @@ export default function NewSalePage() {
                       if (suggestions.length > 0) setSuggestOpen(true)
                     }}
                     onKeyDown={handleClientKeyDown}
-                    placeholder="Nombre del cliente..."
+                    placeholder={
+                      workflow.sector === 'restaurant_gastronomy'
+                        ? 'Ej: Mesa 1, Salón, Para llevar...'
+                        : 'Nombre del cliente...'
+                    }
                     disabled={saving}
                     className="pl-9"
                   />
@@ -760,7 +766,7 @@ export default function NewSalePage() {
                           Transferencia
                         </span>
                       </SelectItem>
-                      {workflow.allowCreditSales && (
+                      {workflow.allowCreditSales && workflow.sector !== 'restaurant_gastronomy' && (
                         <SelectItem value="CREDITO">
                           <span className="flex items-center gap-2">
                             <HandCoins className="h-4 w-4" />

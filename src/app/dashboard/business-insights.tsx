@@ -6,14 +6,19 @@ import { Sparkles, Package, Wallet, AlertCircle, CheckCircle2, ArrowRight } from
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/format'
 import type { DashboardOverview } from '@/modules/dashboard/dashboard.service'
-import type { SectorProfile } from '@/lib/business-workflow'
+import type { BusinessWorkflowConfig, SectorProfile } from '@/lib/business-workflow'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
 interface BusinessInsightsProps {
   data: DashboardOverview
   profile: SectorProfile
+  workflow?: BusinessWorkflowConfig
 }
 
-export function BusinessInsights({ data, profile }: BusinessInsightsProps) {
+export function BusinessInsights({ data, profile, workflow: propWorkflow }: BusinessInsightsProps) {
+  const { config: workflowHook } = useBusinessWorkflow()
+  const workflow = propWorkflow || workflowHook
+  const isCreditDisabled = workflow.sector === 'restaurant_gastronomy' || workflow.allowCreditSales === false
   const { inventorySummary, pendingCreditTotal, pendingCreditClientsCount, salesToday } = data
 
   // 1. Diagnóstico de Stock
@@ -54,8 +59,16 @@ export function BusinessInsights({ data, profile }: BusinessInsightsProps) {
         }
 
   // 2. Diagnóstico de Tesorería & Crédito
-  const creditState =
-    pendingCreditTotal > 0
+  const creditState = isCreditDisabled
+    ? {
+        badge: 'OPERACIÓN DE CONTADO',
+        badgeClass: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30',
+        title: 'Sin créditos habilitados',
+        message: 'Las ventas operan 100% de contado o comanda inmediata.',
+        actionLabel: 'Historial de ventas',
+        actionHref: '/sales',
+      }
+    : pendingCreditTotal > 0
       ? {
           badge: 'CARTERA PENDIENTE',
           badgeClass: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/30',
@@ -75,6 +88,12 @@ export function BusinessInsights({ data, profile }: BusinessInsightsProps) {
 
   // 3. Recomendación Sectorial Dinámica
   const sectorTips: Record<string, string> = {
+    restaurant_gastronomy:
+      'Optimiza la rotación de mesas y el despacho de comandas. En gastronomía, el control de mermas y tiempos de servicio asegura la rentabilidad.',
+    gastronomía:
+      'Optimiza la rotación de mesas y el despacho de comandas. En gastronomía, el control de mermas y tiempos de servicio asegura la rentabilidad.',
+    gastronomia:
+      'Optimiza la rotación de mesas y el despacho de comandas. En gastronomía, el control de mermas y tiempos de servicio asegura la rentabilidad.',
     technology_repair:
       'Garantía técnica sugerida: 90 días en repuestos. Asegúrate de registrar el IMEI o número de serie en cada recepción.',
     fashion_apparel:
@@ -91,7 +110,11 @@ export function BusinessInsights({ data, profile }: BusinessInsightsProps) {
       'Venta ágil de mostrador: mantén el margen sugerido del 35% y confirma disponibilidad antes de cerrar la factura.',
   }
 
-  const activeSectorTip = sectorTips[profile.tag.toLowerCase()] || sectorTips.retail_general || profile.description
+  const activeSectorTip =
+    sectorTips[workflow.sector] ||
+    sectorTips[profile.tag.toLowerCase()] ||
+    sectorTips.retail_general ||
+    profile.description
 
   return (
     <Card className="border border-dashed border-border/80 dark:border-white/[0.12] bg-card rounded-2xl shadow-2xs">

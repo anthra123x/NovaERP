@@ -51,3 +51,6 @@ next-env.d.ts
 
 # backups de base de datos (contienen datos reales)
 /backups/
+
+# teamwork internal artifacts
+.agents/teamwork/
