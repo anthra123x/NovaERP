@@ -576,8 +576,8 @@ export default function AdminPage() {
         {/* ======================================================== */}
         <TabsContent value="company" className="space-y-6">
           {/* 0. Copiloto de Autoconfiguración Adaptativa con IA */}
-          <Card className="rounded-3xl border border-dashed border-border/80 dark:border-white/[0.12] bg-card shadow-xs overflow-hidden">
-            <CardHeader className="pb-3 border-b border-dashed border-border/80 dark:border-white/[0.12] bg-muted/20">
+          <Card className="rounded-3xl border border-border/80 dark:border-white/[0.08] bg-card shadow-xs overflow-hidden">
+            <CardHeader className="pb-3 border-b border-border/80 dark:border-white/[0.08] bg-muted/20">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <CardTitle className="text-sm font-bold flex items-center gap-2 font-mono tracking-tight">
                   <span className="px-1.5 py-0.5 rounded text-[10px] bg-primary/10 text-primary border border-primary/20">
@@ -610,7 +610,7 @@ export default function AdminPage() {
                       }
                     }}
                     placeholder="Ej: Tengo una ferretería llamada El Martillo, vendemos herramientas, cemento, tornillería y pinturas..."
-                    className="h-10 text-xs font-mono pr-28 rounded-xl border-dashed border-border/80 dark:border-white/[0.12] focus-visible:ring-1"
+                    className="h-10 text-xs font-mono pr-28 rounded-xl border border-border/80 dark:border-white/[0.12] focus-visible:ring-1"
                     disabled={aiConfiguring}
                   />
                   <Button
@@ -674,7 +674,7 @@ export default function AdminPage() {
                     onClick={() => {
                       setAiPrompt(chip.text)
                     }}
-                    className="px-2 py-0.5 text-[10px] font-mono rounded-md border border-dashed border-border/70 bg-muted/30 hover:bg-muted/80 text-foreground/80 hover:text-foreground transition-colors cursor-pointer"
+                    className="px-2 py-0.5 text-[10px] font-mono rounded-md border border-border/70 bg-muted/30 hover:bg-muted/80 text-foreground/80 hover:text-foreground transition-colors cursor-pointer"
                   >
                     {chip.label}
                   </button>
@@ -683,7 +683,7 @@ export default function AdminPage() {
 
               {/* Feedback del resultado */}
               {aiConfigResult && (
-                <div className="p-3 rounded-xl border border-dashed border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300 text-xs font-mono space-y-1">
+                <div className="p-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-300 text-xs font-mono space-y-1">
                   <div className="flex items-center gap-1.5 font-bold">
                     <Check className="h-3.5 w-3.5 text-emerald-500" />
                     <span>[ADAPTACIÓN COMPLETADA]</span>

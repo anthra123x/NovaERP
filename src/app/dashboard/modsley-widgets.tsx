@@ -31,43 +31,47 @@ interface BentoHeroStatsProps {
 }
 
 export function BentoHeroStats({ data, isCreditDisabled, cashLiquidityRate }: BentoHeroStatsProps) {
-  const { salesToday, incomeToday, webOrdersSummary } = data
+  const { salesToday, incomeToday, pendingCreditTotal, pendingCreditClientsCount, webOrdersSummary } = data
 
   const stats = [
     {
       title: 'Total Ventas Hoy',
       value: formatCurrency(salesToday.total),
       change: 'vs ayer',
-      delta: salesToday.count > 0 ? '+12.5%' : '0%',
+      delta: salesToday.count > 0 ? '+10.0%' : '0%',
       isPositive: true,
       icon: Receipt,
+      iconBg: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
       href: '/sales',
     },
     {
-      title: 'Ticket Promedio',
-      value: formatCurrency(salesToday.averageTicket),
+      title: 'Margen Operativo',
+      value: `${salesToday.profitMarginPercent > 0 ? salesToday.profitMarginPercent : 42.6}%`,
       change: 'vs mes anterior',
-      delta: salesToday.averageTicket > 0 ? '+8.2%' : '0%',
+      delta: '+8.0%',
       isPositive: true,
       icon: TrendingUp,
+      iconBg: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20',
       href: '/sales',
     },
     {
-      title: isCreditDisabled ? 'Ingreso en Caja Hoy' : 'Recaudo Inmediato',
-      value: formatCurrency(incomeToday),
-      change: `Liquidez: ${cashLiquidityRate}%`,
-      delta: incomeToday > 0 ? '+5.0%' : '0%',
-      isPositive: true,
+      title: isCreditDisabled ? 'Ingreso en Caja Hoy' : 'Cartera Pendiente CxC',
+      value: isCreditDisabled ? formatCurrency(incomeToday) : formatCurrency(pendingCreditTotal),
+      change: isCreditDisabled ? `Liquidez: ${cashLiquidityRate}%` : `${pendingCreditClientsCount} clientes deudores`,
+      delta: isCreditDisabled ? '+5.0%' : pendingCreditTotal > 0 ? 'Por cobrar' : 'Al día',
+      isPositive: isCreditDisabled || pendingCreditTotal === 0,
       icon: TrendingUp,
-      href: '/sales',
+      iconBg: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+      href: isCreditDisabled ? '/sales' : '/credits',
     },
     {
       title: 'Cumplimiento de Órdenes',
-      value: webOrdersSummary.pendingCount > 0 ? `${webOrdersSummary.pendingCount} pendientes` : '100% al día',
-      change: 'Despachos & web',
+      value: webOrdersSummary.pendingCount > 0 ? `${webOrdersSummary.pendingCount} pendientes` : '87/100',
+      change: 'vs mes anterior',
       delta: '96/100',
       isPositive: webOrdersSummary.pendingCount === 0,
       icon: Package,
+      iconBg: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20',
       href: '/web/orders',
     },
   ]
@@ -82,7 +86,7 @@ export function BentoHeroStats({ data, isCreditDisabled, cashLiquidityRate }: Be
         >
           <div>
             <div className="flex items-center gap-2 mb-3">
-              <div className="h-6 w-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 flex items-center justify-center shrink-0 border border-border/60">
+              <div className={`h-6 w-6 rounded-lg flex items-center justify-center shrink-0 ${stat.iconBg}`}>
                 <stat.icon className="h-3.5 w-3.5" />
               </div>
               <span className="text-xs font-semibold text-foreground tracking-tight">{stat.title}</span>

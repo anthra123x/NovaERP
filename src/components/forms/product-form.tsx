@@ -236,7 +236,7 @@ export function ProductForm({
                 : `Completa los datos del nuevo ${profile.labels.singular.toLowerCase()}`}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground self-start sm:self-auto px-2 py-1 bg-muted/60 rounded-md border border-dashed border-border/80">
+          <div className="flex items-center gap-1.5 font-mono text-[10px] text-muted-foreground self-start sm:self-auto px-2 py-1 bg-muted/60 rounded-md border border-border/70">
             <span className="font-bold text-foreground">SECTOR:</span>
             <span className="text-emerald-600 dark:text-emerald-400 font-bold">{profile.tag}</span>
             <span>&bull;</span>

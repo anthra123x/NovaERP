@@ -383,7 +383,7 @@ export default function NewSalePage() {
                   <Search className="h-5 w-5" />
                   {profile.labels.plural}
                 </span>
-                <span className="text-[10px] font-mono text-muted-foreground px-2 py-0.5 bg-muted/60 rounded border border-dashed border-border/80 font-semibold">
+                <span className="text-[10px] font-mono text-muted-foreground px-2 py-0.5 bg-muted/60 rounded-md border border-border/70 font-semibold">
                   SECTOR: {profile.tag}
                 </span>
               </CardTitle>
