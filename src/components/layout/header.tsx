@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import Link from 'next/link'
 import {
   Search,
   LogOut,
@@ -13,6 +14,13 @@ import {
   Loader2,
   ArrowRight,
   Settings,
+  Home,
+  ChevronRight,
+  Calendar,
+  Sun,
+  Moon,
+  RefreshCw,
+  Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,6 +39,7 @@ import { globalSearch } from '@/modules/search/search.actions'
 import { formatCurrency } from '@/lib/format'
 import {
   getUserPreferences,
+  saveUserPreferences,
   PREFERENCES_CHANGED_EVENT,
   ACCENT_PALETTES,
   type AccentColor,
@@ -72,14 +81,59 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const [results, setResults] = useState<SearchResults>(EMPTY_RESULTS)
   const [open, setOpen] = useState(false)
   const [searching, setSearching] = useState(false)
-  const [accent, setAccent] = useState<AccentColor>('emerald')
+  const [accent, setAccent] = useState<AccentColor>('slate')
   const [roleTitle, setRoleTitle] = useState('Administrador')
+  const [todayDate, setTodayDate] = useState('')
+  const [isDark, setIsDark] = useState(true)
 
   const searchBoxRef = useRef<HTMLFormElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const hasResults = results.products.length > 0 || results.clients.length > 0 || results.sales.length > 0
+
+  useEffect(() => {
+    const d = new Date()
+    const formatted = d.toLocaleDateString('es-CO', {
+      weekday: 'short',
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+    setTodayDate(formatted.charAt(0).toUpperCase() + formatted.slice(1))
+    setIsDark(document.documentElement.classList.contains('dark'))
+  }, [])
+
+  function toggleTheme() {
+    const nextIsDark = !isDark
+    setIsDark(nextIsDark)
+    saveUserPreferences({ theme: nextIsDark ? 'dark' : 'light' })
+    if (nextIsDark) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }
+
+  function handleRefresh() {
+    router.refresh()
+    window.dispatchEvent(new CustomEvent('nova_refresh_dashboard'))
+  }
+
+  const sectionLabels: Record<string, string> = {
+    dashboard: 'Dashboard',
+    sales: 'Ventas POS',
+    inventory: 'Inventario',
+    clients: 'Clientes',
+    credits: 'Créditos',
+    reports: 'Reportes',
+    web: 'Tienda Online',
+    admin: 'Configuración',
+    assistant: 'Asistente IA',
+    profile: 'Mi Perfil',
+  }
+  const currentSection = pathname.split('/')[1] || 'dashboard'
+  const sectionLabel = sectionLabels[currentSection] || 'Dashboard'
 
   // Cerrar y limpiar búsqueda al cambiar de ruta
   useEffect(() => {
@@ -189,9 +243,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'A'
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-dashed border-border/70 dark:border-white/[0.08] bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
-      {/* Lado Izquierdo: Menú móvil y Barra de búsqueda global */}
-      <div className="flex items-center gap-2.5 sm:gap-3 flex-1 max-w-xl min-w-0">
+    <header className="flex h-16 items-center justify-between border-b border-border/70 dark:border-white/[0.08] bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
+      {/* Lado Izquierdo: Menú móvil, Breadcrumbs y Barra de búsqueda global */}
+      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-2xl min-w-0">
         <Button
           variant="ghost"
           size="icon"
@@ -200,6 +254,19 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         >
           <Menu className="h-5 w-5" />
         </Button>
+
+        {/* Breadcrumbs con Home icon como en la captura */}
+        <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 mr-1">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1 hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
+            title="Inicio"
+          >
+            <Home className="h-3.5 w-3.5" />
+          </Link>
+          <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+          <span className="font-semibold text-foreground">{sectionLabel}</span>
+        </div>
 
         {/* Barra de búsqueda estilo Pill con atajo rápido y protección anti-autofill */}
         <form
@@ -353,10 +420,50 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         </form>
       </div>
 
-      {/* Lado Derecho: Notificaciones y Perfil de Usuario */}
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* Lado Derecho: Fecha, Acciones rápidas, Notificaciones y Perfil de Usuario */}
+      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Fecha en vivo estilo captura */}
+        {todayDate && (
+          <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono text-muted-foreground bg-muted/40 border border-border/60">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground/80" />
+            <span>{todayDate}</span>
+          </div>
+        )}
+
+        {/* Toggle de tema oscuro / claro */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          title={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+          aria-label="Alternar tema"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+        >
+          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </button>
+
+        {/* Botón de recargar / refrescar datos */}
+        <button
+          type="button"
+          onClick={handleRefresh}
+          title="Recargar datos"
+          aria-label="Recargar datos"
+          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+        >
+          <RefreshCw className="h-3.5 w-3.5" />
+        </button>
+
         {/* Campana de Notificaciones */}
         <NotificationsDropdown />
+
+        {/* Botón Principal de Acción de alto contraste: + Nueva Venta */}
+        <Button
+          render={<Link href="/sales/new" />}
+          size="sm"
+          className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-xs hover:opacity-90 transition-opacity"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span>+ Nueva Venta</span>
+        </Button>
 
         {/* Avatar Dropdown en el Header */}
         <DropdownMenu>

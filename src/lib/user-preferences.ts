@@ -23,7 +23,7 @@ export const PREFERENCES_CHANGED_EVENT = 'nova_preferences_changed'
 
 export const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'dark',
-  accentColor: 'emerald',
+  accentColor: 'slate',
   tableDensity: 'normal',
   defaultModule: '/dashboard',
   posSound: true,

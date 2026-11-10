@@ -14,6 +14,10 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   X,
+  BarChart3,
+  Store,
+  Sparkles,
+  Zap,
 } from 'lucide-react'
 import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
@@ -26,6 +30,13 @@ const navigation = [
   { name: 'Clientes', href: '/clients', icon: Users },
 ]
 
+// Módulos secundarios de gestión y soporte
+const secondaryNavigation = [
+  { name: 'Reportes', href: '/reports', icon: BarChart3 },
+  { name: 'Tienda Online', href: '/web', icon: Store },
+  { name: 'Asistente IA', href: '/assistant', icon: Sparkles },
+]
+
 interface SidebarProps {
   user?: {
     name: string
@@ -36,7 +47,7 @@ interface SidebarProps {
   onMobileClose?: () => void
 }
 
-export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: SidebarProps) {
+export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
   const { config: workflow, profile } = useBusinessWorkflow()
 
@@ -55,18 +66,18 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
   }
 
   return (
-    <div className="flex h-full w-full flex-col bg-card/95 dark:bg-card/95 text-foreground select-none rounded-3xl border border-dashed border-border/80 dark:border-white/[0.10] shadow-sm backdrop-blur-xl overflow-visible transition-all duration-300 no-scrollbar">
+    <div className="flex h-full w-full flex-col bg-card text-foreground select-none rounded-3xl border border-border/80 dark:border-white/[0.08] shadow-xs backdrop-blur-xl overflow-hidden transition-all duration-300 no-scrollbar">
       {/* Header superior: h-16 alineado con el Header principal */}
       <div
         className={cn(
-          'flex h-16 items-center border-b border-dashed border-border/60 dark:border-white/[0.08] shrink-0 transition-all duration-200',
+          'flex h-16 items-center border-b border-border/60 dark:border-white/[0.08] shrink-0 transition-all duration-200',
           collapsed ? 'justify-center px-1' : 'justify-between px-3.5',
         )}
       >
         {!collapsed ? (
           <div className="flex items-center gap-2.5 min-w-0">
             {/* Emblema circular en modo expandido */}
-            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/60 text-foreground border border-dashed border-border/80 overflow-hidden shadow-2xs">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-foreground border border-border/80 overflow-hidden shadow-2xs">
               {workflow.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -110,14 +121,14 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
               onClick={onToggleCollapse}
               title="Expandir barra lateral"
               aria-label="Expandir barra lateral"
-              className="group/btn relative flex h-10 w-10 items-center justify-center rounded-full bg-muted/60 text-foreground border border-dashed border-border/80 hover:bg-muted hover:border-primary/40 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-2xs"
+              className="group/btn relative flex h-10 w-10 items-center justify-center rounded-xl bg-muted/60 text-foreground border border-border/80 hover:bg-muted hover:border-primary/40 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer shadow-2xs"
             >
               {workflow.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={workflow.logoUrl}
                   alt={workflow.companyName || 'Logo'}
-                  className="h-full w-full rounded-full object-cover"
+                  className="h-full w-full rounded-xl object-cover"
                 />
               ) : (
                 <svg
@@ -131,7 +142,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                 </svg>
               )}
             </button>
-            <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-dashed border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+            <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
               {workflow.companyName || 'Nova ERP'} &bull; [{profile.tag}] &bull; Click para expandir
             </div>
           </div>
@@ -168,84 +179,143 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
         )}
       </div>
 
-      {/* Navegación de módulos principales */}
+      {/* Navegación de módulos */}
       <nav
         className={cn(
           'flex-1 py-3 no-scrollbar [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
           collapsed
-            ? 'px-2 space-y-2 flex flex-col items-center overflow-visible'
-            : 'px-3 space-y-1 overflow-y-auto overflow-x-hidden',
+            ? 'px-2 space-y-3 flex flex-col items-center overflow-visible'
+            : 'px-3 space-y-4 overflow-y-auto overflow-x-hidden',
         )}
       >
-        {visibleNavigation.map((item) => {
-          const active = isActive(item.href)
-
-          if (collapsed) {
-            return (
-              <div key={item.name} className="relative group flex justify-center w-full">
-                <Link
-                  href={item.href}
-                  onClick={handleLinkClick}
-                  aria-label={item.name}
-                  className={cn(
-                    'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer relative',
-                    active
-                      ? 'bg-primary/10 text-primary border border-dashed border-primary/40 shadow-2xs font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:scale-105 active:scale-95',
-                  )}
-                >
-                  <item.icon className="h-4.5 w-4.5 shrink-0" />
-                  {active && (
-                    <span
-                      className="absolute -right-1 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_4px_var(--color-primary)]"
-                      aria-hidden="true"
-                    />
-                  )}
-                </Link>
-
-                <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-dashed border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
-                  {item.name}
-                </div>
-              </div>
-            )
-          }
-
-          return (
-            <Link
-              key={item.name}
-              href={item.href}
-              onClick={handleLinkClick}
-              className={cn(
-                'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150',
-                active
-                  ? 'bg-primary/10 text-primary border border-dashed border-primary/40 font-semibold'
-                  : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
-              )}
-            >
-              <item.icon
-                className={cn(
-                  'h-4.5 w-4.5 shrink-0 transition-colors duration-150',
-                  active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
-                )}
-              />
-              <span className="flex-1 truncate tracking-tight">{item.name}</span>
-              {active && (
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_4px_var(--color-primary)] shrink-0"
-                  aria-hidden="true"
-                />
-              )}
-            </Link>
-          )
-        })}
-
-        {/* Separador y enlace de Administración */}
-        <div
-          className={cn(
-            'border-t border-dashed border-border/60 dark:border-white/[0.08] pt-2 mt-2 w-full',
-            collapsed && 'flex justify-center',
+        {/* Grupo 1: MAIN */}
+        <div className="space-y-1 w-full">
+          {!collapsed && (
+            <div className="px-3 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground/80 uppercase font-mono">
+              Main
+            </div>
           )}
-        >
+          {visibleNavigation.map((item) => {
+            const active = isActive(item.href)
+
+            if (collapsed) {
+              return (
+                <div key={item.name} className="relative group flex justify-center w-full">
+                  <Link
+                    href={item.href}
+                    onClick={handleLinkClick}
+                    aria-label={item.name}
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer relative',
+                      active
+                        ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 border border-border/80 shadow-2xs font-semibold'
+                        : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:scale-105 active:scale-95',
+                    )}
+                  >
+                    <item.icon className="h-4.5 w-4.5 shrink-0" />
+                    {active && (
+                      <span
+                        className="absolute -right-1 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary"
+                        aria-hidden="true"
+                      />
+                    )}
+                  </Link>
+
+                  <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+                    {item.name}
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={handleLinkClick}
+                className={cn(
+                  'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150',
+                  active
+                    ? 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-50 border border-border/70 font-semibold shadow-2xs'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    'h-4 w-4 shrink-0 transition-colors duration-150',
+                    active ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground',
+                  )}
+                />
+                <span className="flex-1 truncate tracking-tight">{item.name}</span>
+                {active && (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-primary shrink-0"
+                    aria-hidden="true"
+                  />
+                )}
+              </Link>
+            )
+          })}
+        </div>
+
+        {/* Grupo 2: GESTIÓN & SOPORTE */}
+        <div className="space-y-1 w-full pt-1">
+          {!collapsed && (
+            <div className="px-3 py-1 text-[10px] font-semibold tracking-wider text-muted-foreground/80 uppercase font-mono">
+              Gestión & Soporte
+            </div>
+          )}
+          {secondaryNavigation.map((item) => {
+            const active = isActive(item.href)
+
+            if (collapsed) {
+              return (
+                <div key={item.name} className="relative group flex justify-center w-full">
+                  <Link
+                    href={item.href}
+                    onClick={handleLinkClick}
+                    aria-label={item.name}
+                    className={cn(
+                      'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer relative',
+                      active
+                        ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 border border-border/80 shadow-2xs font-semibold'
+                        : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:scale-105 active:scale-95',
+                    )}
+                  >
+                    <item.icon className="h-4.5 w-4.5 shrink-0" />
+                  </Link>
+
+                  <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+                    {item.name}
+                  </div>
+                </div>
+              )
+            }
+
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                onClick={handleLinkClick}
+                className={cn(
+                  'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150',
+                  active
+                    ? 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-50 border border-border/70 font-semibold shadow-2xs'
+                    : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                )}
+              >
+                <item.icon
+                  className={cn(
+                    'h-4 w-4 shrink-0 transition-colors duration-150',
+                    active ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground',
+                  )}
+                />
+                <span className="flex-1 truncate tracking-tight">{item.name}</span>
+              </Link>
+            )
+          })}
+
+          {/* Enlace de Administración */}
           {collapsed ? (
             <div className="relative group flex justify-center w-full">
               <Link
@@ -253,22 +323,16 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
                 onClick={handleLinkClick}
                 aria-label="Administración"
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-2xl transition-all duration-200 cursor-pointer relative',
+                  'flex h-10 w-10 items-center justify-center rounded-xl transition-all duration-200 cursor-pointer relative',
                   pathname === '/admin' || pathname.startsWith('/admin/')
-                    ? 'bg-primary/10 text-primary border border-dashed border-primary/40 shadow-2xs font-semibold'
+                    ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-50 border border-border/80 shadow-2xs font-semibold'
                     : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground hover:scale-105 active:scale-95',
                 )}
               >
                 <Settings className="h-4.5 w-4.5 shrink-0" />
-                {(pathname === '/admin' || pathname.startsWith('/admin/')) && (
-                  <span
-                    className="absolute -right-1 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_4px_var(--color-primary)]"
-                    aria-hidden="true"
-                  />
-                )}
               </Link>
-              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-dashed border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
-                Administración
+              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-xs font-medium whitespace-nowrap shadow-md border border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+                Configuración
               </div>
             </div>
           ) : (
@@ -276,69 +340,102 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
               href="/admin"
               onClick={handleLinkClick}
               className={cn(
-                'group relative flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-medium transition-all duration-150',
+                'group relative flex items-center gap-3 px-3 py-2 rounded-xl text-xs font-medium transition-all duration-150',
                 pathname === '/admin' || pathname.startsWith('/admin/')
-                  ? 'bg-primary/10 text-primary border border-dashed border-primary/40 font-semibold'
+                  ? 'bg-zinc-100 dark:bg-zinc-800/90 text-zinc-900 dark:text-zinc-50 border border-border/70 font-semibold shadow-2xs'
                   : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
               )}
             >
               <Settings
                 className={cn(
-                  'h-4.5 w-4.5 shrink-0 transition-colors duration-150',
+                  'h-4 w-4 shrink-0 transition-colors duration-150',
                   pathname === '/admin' || pathname.startsWith('/admin/')
-                    ? 'text-primary'
+                    ? 'text-foreground'
                     : 'text-muted-foreground group-hover:text-foreground',
                 )}
               />
-              <span className="flex-1 truncate tracking-tight">Administración</span>
-              {(pathname === '/admin' || pathname.startsWith('/admin/')) && (
-                <span
-                  className="h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_4px_var(--color-primary)] shrink-0"
-                  aria-hidden="true"
-                />
-              )}
+              <span className="flex-1 truncate tracking-tight">Configuración</span>
             </Link>
           )}
         </div>
       </nav>
 
-      {/* Pie de la barra lateral: atajos y toggle */}
-      <div className="border-t border-dashed border-border/60 dark:border-white/[0.08] p-2 shrink-0">
+      {/* Tarjeta de Plan / Almacén Activo estilo captura */}
+      {!collapsed && (
+        <div className="px-3 pb-2 pt-1">
+          <div className="p-3 rounded-2xl bg-muted/40 border border-border/70 dark:border-white/[0.08] flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Zap className="h-3.5 w-3.5" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-foreground truncate">Nova ERP Pro</span>
+                <span className="text-[10px] text-muted-foreground truncate font-mono">Sincronización activa</span>
+              </div>
+            </div>
+            <Link
+              href="/admin"
+              onClick={handleLinkClick}
+              className="w-full py-1.5 px-2 rounded-xl bg-primary text-primary-foreground text-center text-[11px] font-semibold hover:opacity-90 transition-opacity"
+            >
+              Configuración & Estado
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Pie de la barra lateral: Fila de Usuario y Atajos */}
+      <div className="border-t border-border/60 dark:border-white/[0.08] p-2.5 shrink-0">
         {collapsed ? (
-          <div className="flex flex-col items-center gap-1.5">
+          <div className="flex flex-col items-center gap-2">
             <div className="relative group flex justify-center w-full">
               <button
                 type="button"
                 onClick={onToggleCollapse}
                 title="Expandir barra lateral"
                 aria-label="Expandir barra lateral"
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/60 hover:text-foreground hover:bg-muted/60 transition-all cursor-pointer"
+                className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all cursor-pointer"
               >
                 <PanelLeftOpen className="h-4 w-4" />
               </button>
-              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-[11px] font-medium whitespace-nowrap shadow-md border border-dashed border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
+              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-[11px] font-medium whitespace-nowrap shadow-md border border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
                 Expandir barra lateral
               </div>
             </div>
             <div className="relative group flex justify-center w-full">
-              <button
-                type="button"
-                title="Atajos de teclado"
-                aria-label="Atajos de teclado"
-                className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground/50 hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer"
+              <Link
+                href="/profile"
+                title="Mi Perfil"
+                className="h-8 w-8 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center font-bold text-xs shrink-0"
               >
-                <Keyboard className="h-3.5 w-3.5" />
-              </button>
-              <div className="absolute left-full ml-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-xl bg-popover text-popover-foreground text-[11px] font-mono whitespace-nowrap shadow-md border border-dashed border-border/80 backdrop-blur-md z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-all duration-150">
-                Alt+Q: Buscar · Alt+V: Ventas
-              </div>
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+              </Link>
             </div>
           </div>
         ) : (
-          <div className="px-2 py-1 text-[10.5px] text-muted-foreground/70 flex items-center justify-between font-mono">
-            <div className="flex items-center gap-1.5">
-              <Keyboard className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
-              <span>Alt+Q buscar &bull; Alt+V ventas</span>
+          <div className="flex items-center justify-between gap-2">
+            <Link
+              href="/profile"
+              onClick={handleLinkClick}
+              className="flex items-center gap-2.5 min-w-0 flex-1 p-1 rounded-xl hover:bg-muted/60 transition-colors"
+            >
+              <div className="h-8 w-8 rounded-full bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 flex items-center justify-center font-bold text-xs shrink-0">
+                {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
+              </div>
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-xs font-semibold text-foreground truncate">{user?.name || 'Administrador'}</span>
+                <span className="text-[10px] text-muted-foreground truncate font-mono">{user?.email || 'admin@cilmax.com'}</span>
+              </div>
+            </Link>
+            <div className="flex items-center gap-1 shrink-0 text-muted-foreground/60">
+              <button
+                type="button"
+                aria-label="Atajos de teclado"
+                title="Atajos de teclado: Alt+Q Buscar · Alt+V Ventas"
+                className="p-1 rounded-lg hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer"
+              >
+                <Keyboard className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
         )}
