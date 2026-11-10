@@ -88,10 +88,11 @@ Su responsabilidad abarca la adaptabilidad responsiva entre dispositivos moviles
 - Filtrado inmutable de navegacion: El arreglo `navigation` se mantiene inmutable a nivel de modulo, derivando `visibleNavigation` en tiempo de ejecucion en el cuerpo de `Sidebar`. Esto previene condiciones de carrera o mutaciones accidentales del menu entre cambios de sector.
 
 ## 7. Estado y ultimos cambios
-- Redisenio integral del Shell de aplicacion con estetica minimalista de espacio de trabajo moderna:
-  - `Header`: Incorporacion de migas de pan ("Inicio > [Ruta]"), chip dinamico de fecha formateada, boton de recarga rapida que emite `nova_refresh_dashboard`, conmutador de tema visual accesible y boton primario de alto contraste `+ Nueva Venta` direccionado a `/sales/new`.
-  - `Sidebar`: Reestructuracion en dos secciones semanticas (`MAIN` y `GESTIÓN & SOPORTE`), tarjeta inferior de estado "Nova ERP Pro", y fila de perfil de usuario con avatar squircle al pie.
-  - Reemplazo de bordes discontinuos por micro-bordes solidos (`border border-border/80 dark:border-white/[0.08]`) y preservacion de atributos de accesibilidad (`aria-label="Atajos de teclado"`).
+- Depuración y alineación estética estricta con diseño de referencia Modsley:
+  - `Sidebar`: Remoción total de agrupaciones secundarias no solicitadas (`Reportes`, `Tienda Online`, `Asistente IA`) y eliminación del encabezado `GESTIÓN & SOPORTE`. La barra lateral conserva exclusivamente los módulos operativos originales de Nova ERP (`Dashboard`, `Ventas`, `Créditos` según sector, `Inventario`, `Clientes`, `Administración`).
+  - Erradicación de indicadores de punto blanco y tipografías monoespaciadas en encabezados y enlaces activos, adoptando tarjetas elevadas en blanco/zinc (`bg-white dark:bg-zinc-800`), sombras sutiles y tipografía sans-serif limpia.
+  - Tarjeta inferior "Upgrade to Pro Plan" con squircle oscuro e icono de rayo (`Zap`), botón sólido negro "Upgrade Now" y fila de usuario con avatar circular y atajos de teclado.
+  - `Header`: Migas de pan limpias, chip de fecha con tipografía sans-serif, conmutador de tema, recarga en tiempo real y botón de acción principal `+ Nueva Venta`.
 - Incorporacion de Milestone 2: Filtrado dinamico de navegacion en `sidebar.tsx` para ocultar el modulo de creditos en el sector `restaurant_gastronomy` y cuando `allowCreditSales` es falso.
 - Preservacion estricta del modulo de creditos para los 7 sectores comerciales preexistentes con ventas a credito activas.
 - Creacion de `sidebar.test.ts` con 22 pruebas de contrato y validacion empirica de sectores.

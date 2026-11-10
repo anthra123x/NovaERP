@@ -424,7 +424,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
       <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
         {/* Fecha en vivo estilo captura */}
         {todayDate && (
-          <div className="hidden xl:flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-mono text-muted-foreground bg-muted/40 border border-border/60">
+          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground bg-muted/40 border border-border/60">
             <Calendar className="h-3.5 w-3.5 text-muted-foreground/80" />
             <span>{todayDate}</span>
           </div>
