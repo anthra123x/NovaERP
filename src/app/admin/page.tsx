@@ -663,6 +663,10 @@ export default function AdminPage() {
                     label: 'Servicio Técnico Tech',
                     text: 'Servicio técnico de celulares y computadores, venta de repuestos y pantallas',
                   },
+                  {
+                    label: 'Restaurante & Cafetería',
+                    text: 'Restaurante y cafetería con platos a la carta, bebidas, postres y atención a comensales en mesa',
+                  },
                 ].map((chip) => (
                   <button
                     key={chip.label}
