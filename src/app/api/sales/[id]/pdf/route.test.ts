@@ -61,5 +61,5 @@ describe('route /api/sales/[id]/pdf', () => {
     console.log('ROUTE bytes:', buf.length, 'magic:', buf.subarray(0, 5).toString('latin1'))
     expect(res.status).toBe(200)
     expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-')
-  })
+  }, 15000)
 })

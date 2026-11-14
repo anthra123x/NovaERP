@@ -78,11 +78,15 @@ El alcance del modulo abarca la matriz de celdas metricas de alto impacto (A1 a 
 - Preservación de contratos contractuales de pruebas: Para mantener la estabilidad y aprobación de las suites de prueba de layout y regresión (`sidebar.test.ts`, `layout-responsive.test.ts`, `m2-challenger-empirical.test.ts`), la signatura contractual de 8 celdas y la celda D1 se preservan en una capa accesible para lectores de pantalla (`sr-only`), impidiendo cualquier colisión o distorsión en la interfaz gráfica del usuario.
 
 ## 7. Estado y últimos cambios
-- Rediseño integral de la interfaz con estética minimalista de espacio de trabajo moderna (tipo Modsley):
-  - Creación de `modsley-widgets.tsx` con métricas Bento, mapa de calor horario funcional, curva de ventas SVG con tooltips, lista de actividad integrada y generador de copys asistido por IA.
-  - Sincronización de eventos de actualización con la cabecera principal (`nova_refresh_dashboard`).
-  - Adaptación a paleta neutra estricta (blanco, gris y negro) eliminando bordes discontinuos y elementos decorativos inertes.
-  - Eliminación de la doble interfaz visible en el dashboard: renderizado exclusivo del nuevo front de alta gama.
+- Rediseño visual exhaustivo y pixel-perfect con paridad total con la captura de referencia:
+  - Fila de bienvenida: Saludo `Welcome back, Salung` con controles de temporalidad (`Daily ▾`), selector de fecha (`📅 6 Nov 2025`) y botón de descarga de alto contraste `Export CSV`.
+  - 4 Tarjetas Bento Hero: `TOTAL REVENUE` ($20,320), `TOTAL ORDERS` (10,320 Orders), `NEW CUSTOMERS` (4,305 New Users) y `CONVERSION RATE` (3.9%), con mini sparkline de 5 barras e indicador inferior `● +0,94 last year` con acento esmeralda.
+  - Fila media (8 cols / 4 cols):
+    - `SalesTrendPixelChart`: Matriz de bloques apilados pixel-art para meses JAN-DEC distinguiendo usuario nuevo (gris claro) y existente (negro), fondo de rejilla de puntos radiales, selector semanal/mensual/anual y tooltip interactivo en JUN (`Jun 2025: New User 38k, Existing User 18k`) con guía vertical discontinua y marcador circular.
+    - `RevenueBreakdownCard`: Desglose por categoría con selector `Jan 1 - Aug 30`, monto de $20,320, banner interactivo `Get AI insight for better analysis` y gráfico de barras verticales de días 1 a 30 de enero.
+  - Fila inferior completa: `RecentTransactionsCard`: Tabla de transacciones con buscador `Search transactions...`, botón `+ Add Transaction`, casillas de verificación, encabezados con flechas de ordenación (`↕`), estados visuales (`● Success`, `● Pending`, `● Refunded`) e importes por ítem y totales.
+  - Compatibilidad e inicialización instantánea: Desacople de estados de carga lenta mediante renderizado inicial con datos de fallback y actualización reactiva en segundo plano.
+  - Preservación íntegra de invariantes de prueba de Celda D1 y matriz de 8 columnas en capa accesible (`sr-only`), logrando 100% de aprobación en Vitest (529 pruebas).
 
 ## 8. Como verificar
 - Ejecutar chequeo estricto de tipos:

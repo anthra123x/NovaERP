@@ -90,7 +90,7 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-dvh bg-[#f0f2f5] dark:bg-[#07090e] text-foreground overflow-hidden">
+    <div className="flex h-dvh bg-[#eef0f3] dark:bg-[#07090e] text-foreground overflow-hidden p-2 sm:p-3 lg:p-3.5">
       {/* Overlay para móviles */}
       {sidebarOpen && (
         <div
@@ -99,29 +99,32 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         />
       )}
 
-      {/* Contenedor del Sidebar con estética Capsule Dock flotante (referencia Imagen 1) */}
-      <aside
-        className={cn(
-          'fixed inset-y-3 left-3 z-50 transition-all duration-300 ease-in-out lg:static lg:inset-auto lg:my-3 lg:ml-3 lg:mr-2 lg:h-[calc(100dvh-1.5rem)] shrink-0',
-          sidebarOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1.5rem)] lg:translate-x-0',
-          'w-72 lg:w-64',
-          !isMobile && isCollapsed && 'lg:w-16',
-        )}
-      >
-        <Sidebar
-          user={user}
-          collapsed={!isMobile && isCollapsed}
-          onToggleCollapse={toggleCollapse}
-          onMobileClose={() => setSidebarOpen(false)}
-        />
-      </aside>
+      {/* Marco Unificado de la Aplicación (Estilo exacto de la captura) */}
+      <div className="flex h-full w-full rounded-2xl lg:rounded-[22px] border border-border/80 dark:border-white/[0.08] bg-card shadow-sm overflow-hidden min-w-0 relative">
+        {/* Contenedor del Sidebar */}
+        <aside
+          className={cn(
+            'fixed inset-y-0 left-0 z-50 transition-all duration-300 ease-in-out lg:static lg:inset-auto lg:h-full shrink-0 bg-card border-r border-border/70 dark:border-white/[0.08]',
+            sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+            'w-72 lg:w-64',
+            !isMobile && isCollapsed && 'lg:w-16',
+          )}
+        >
+          <Sidebar
+            user={user}
+            collapsed={!isMobile && isCollapsed}
+            onToggleCollapse={toggleCollapse}
+            onMobileClose={() => setSidebarOpen(false)}
+          />
+        </aside>
 
-      {/* Área Principal de Contenido con estética de panel flotante integrado */}
-      <div className="flex flex-1 flex-col overflow-hidden min-w-0 lg:my-3 lg:mr-3 lg:h-[calc(100dvh-1.5rem)] lg:rounded-3xl lg:border lg:border-border/70 dark:lg:border-white/[0.08] lg:bg-background/95 lg:shadow-xs">
-        <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-7">
-          <div className="mx-auto max-w-[1600px] w-full">{children}</div>
-        </main>
+        {/* Área Principal de Contenido */}
+        <div className="flex flex-1 flex-col overflow-hidden min-w-0 bg-[#f8f9fb] dark:bg-background/95">
+          <Header user={user} onMenuClick={() => setSidebarOpen(true)} />
+          <main className="flex-1 overflow-y-auto p-4 sm:p-5 lg:p-6">
+            <div className="mx-auto max-w-[1600px] w-full">{children}</div>
+          </main>
+        </div>
       </div>
 
       {/* Asistente IA Flotante */}

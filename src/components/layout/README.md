@@ -88,11 +88,12 @@ Su responsabilidad abarca la adaptabilidad responsiva entre dispositivos moviles
 - Filtrado inmutable de navegacion: El arreglo `navigation` se mantiene inmutable a nivel de modulo, derivando `visibleNavigation` en tiempo de ejecucion en el cuerpo de `Sidebar`. Esto previene condiciones de carrera o mutaciones accidentales del menu entre cambios de sector.
 
 ## 7. Estado y ultimos cambios
-- Depuración y alineación estética estricta con diseño de referencia Modsley:
-  - `Sidebar`: Remoción total de agrupaciones secundarias no solicitadas (`Reportes`, `Tienda Online`, `Asistente IA`) y eliminación del encabezado `GESTIÓN & SOPORTE`. La barra lateral conserva exclusivamente los módulos operativos originales de Nova ERP (`Dashboard`, `Ventas`, `Créditos` según sector, `Inventario`, `Clientes`, `Administración`).
-  - Erradicación de indicadores de punto blanco y tipografías monoespaciadas en encabezados y enlaces activos, adoptando tarjetas elevadas en blanco/zinc (`bg-white dark:bg-zinc-800`), sombras sutiles y tipografía sans-serif limpia.
-  - Tarjeta inferior "Upgrade to Pro Plan" con squircle oscuro e icono de rayo (`Zap`), botón sólido negro "Upgrade Now" y fila de usuario con avatar circular y atajos de teclado.
-  - `Header`: Migas de pan limpias, chip de fecha con tipografía sans-serif, conmutador de tema, recarga en tiempo real y botón de acción principal `+ Nueva Venta`.
+- Rediseño visual exhaustivo basado en interfaz de referencia de alta fidelidad:
+  - Marco de ventana de aplicación de escritorio redondeado (`rounded-[22px]`, `border-border/80`) sobre canvas neutro gris suave (`#eef0f3`).
+  - `Sidebar`: Reestructuración en 4 secciones canónicas (`Main Menu`, `Customers`, `Management`, `Settings`), isotipo monocromático con contenedor cuadrado e inicial Spark "S", selector de equipo `Spark Pixel Team` y tarjeta inferior de operador `Salung Prastyo` / `Sales Operator` con atajo de teclado y selector.
+  - `Header`: Migas de pan `Dashboard › Overview`, barra de búsqueda integrada con atajo `⌘ K`, campana de notificaciones, acceso a ajustes y avatar circular.
+  - Tipografía y contrastes: Eliminación total de bordes gruesos y estilos antiguos; paleta clara con fondo blanco puro para tarjetas y superficies, bordes zinc sutiles y botones de acción en zinc grafito oscuro.
+  - Preservación íntegra de invariantes de prueba (`sidebar.test.ts`, `layout-responsive.test.ts`, `m2-challenger-empirical.test.ts`).
 - Incorporacion de Milestone 2: Filtrado dinamico de navegacion en `sidebar.tsx` para ocultar el modulo de creditos en el sector `restaurant_gastronomy` y cuando `allowCreditSales` es falso.
 - Preservacion estricta del modulo de creditos para los 7 sectores comerciales preexistentes con ventas a credito activas.
 - Creacion de `sidebar.test.ts` con 22 pruebas de contrato y validacion empirica de sectores.

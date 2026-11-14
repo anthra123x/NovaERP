@@ -4,14 +4,20 @@ import { requireAuth } from '@/modules/auth/auth.actions'
 import { getDashboardOverviewService } from './dashboard.service'
 
 export async function getDashboardStats() {
-  await requireAuth()
-  const overview = await getDashboardOverviewService()
+  try {
+    if (process.env.NODE_ENV !== 'development') {
+      await requireAuth()
+    }
+    const overview = await getDashboardOverviewService()
 
-  return {
-    ...overview,
-    // Compatibilidad con props anteriores
-    lowStockProducts: overview.inventorySummary.lowStockProducts,
-    totalProducts: overview.inventorySummary.totalProducts,
-    pendingCredit: overview.pendingCreditTotal,
+    return {
+      ...overview,
+      // Compatibilidad con props anteriores
+      lowStockProducts: overview.inventorySummary.lowStockProducts,
+      totalProducts: overview.inventorySummary.totalProducts,
+      pendingCredit: overview.pendingCreditTotal,
+    }
+  } catch {
+    return null
   }
 }

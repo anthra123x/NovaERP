@@ -14,13 +14,8 @@ import {
   Loader2,
   ArrowRight,
   Settings,
-  Home,
-  ChevronRight,
-  Calendar,
   Sun,
   Moon,
-  RefreshCw,
-  Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -38,12 +33,7 @@ import { NotificationsDropdown } from '@/components/layout/notifications-dropdow
 import { globalSearch } from '@/modules/search/search.actions'
 import { formatCurrency } from '@/lib/format'
 import {
-  getUserPreferences,
   saveUserPreferences,
-  PREFERENCES_CHANGED_EVENT,
-  ACCENT_PALETTES,
-  type AccentColor,
-  type UserPreferences,
 } from '@/lib/user-preferences'
 
 interface HeaderProps {
@@ -81,9 +71,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const [results, setResults] = useState<SearchResults>(EMPTY_RESULTS)
   const [open, setOpen] = useState(false)
   const [searching, setSearching] = useState(false)
-  const [accent, setAccent] = useState<AccentColor>('slate')
-  const [roleTitle, setRoleTitle] = useState('Administrador')
-  const [todayDate, setTodayDate] = useState('')
   const [isDark, setIsDark] = useState(true)
 
   const searchBoxRef = useRef<HTMLFormElement>(null)
@@ -93,14 +80,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const hasResults = results.products.length > 0 || results.clients.length > 0 || results.sales.length > 0
 
   useEffect(() => {
-    const d = new Date()
-    const formatted = d.toLocaleDateString('es-CO', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    })
-    setTodayDate(formatted.charAt(0).toUpperCase() + formatted.slice(1))
     setIsDark(document.documentElement.classList.contains('dark'))
   }, [])
 
@@ -113,11 +92,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     } else {
       document.documentElement.classList.remove('dark')
     }
-  }
-
-  function handleRefresh() {
-    router.refresh()
-    window.dispatchEvent(new CustomEvent('nova_refresh_dashboard'))
   }
 
   const sectionLabels: Record<string, string> = {
@@ -141,21 +115,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     setQuery('')
     setResults(EMPTY_RESULTS)
   }, [pathname])
-
-  // Cargar y escuchar preferencias del usuario (color de avatar y título de rol)
-  useEffect(() => {
-    const prefs = getUserPreferences()
-    setAccent(prefs.accentColor || 'emerald')
-    if (prefs.roleTitle) setRoleTitle(prefs.roleTitle)
-
-    const handler = (e: CustomEvent<UserPreferences>) => {
-      if (e.detail?.accentColor) setAccent(e.detail.accentColor)
-      if (e.detail?.roleTitle) setRoleTitle(e.detail.roleTitle)
-    }
-
-    window.addEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
-    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
-  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -240,35 +199,37 @@ export function Header({ user, onMenuClick }: HeaderProps) {
     router.push(path)
   }
 
-  const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'A'
-
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border/70 dark:border-white/[0.08] bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
-      {/* Lado Izquierdo: Menú móvil, Breadcrumbs y Barra de búsqueda global */}
-      <div className="flex items-center gap-2 sm:gap-3 flex-1 max-w-2xl min-w-0">
+    <header className="flex h-16 items-center justify-between border-b border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 lg:px-6 sticky top-0 z-30 shrink-0">
+      {/* Lado Izquierdo: Menú móvil y Breadcrumbs estilo captura (Dashboard > Overview) */}
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <Button
           variant="ghost"
           size="icon"
           onClick={onMenuClick}
-          className="lg:hidden shrink-0 rounded-xl text-muted-foreground hover:text-foreground"
+          className="lg:hidden shrink-0 rounded-xl text-zinc-500 hover:text-zinc-900"
         >
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Breadcrumbs con Home icon como en la captura */}
-        <div className="hidden md:flex items-center gap-1.5 text-xs text-muted-foreground shrink-0 mr-1">
+        {/* Breadcrumbs exactos de la captura: Dashboard > Overview */}
+        <div className="flex items-center gap-1.5 text-xs sm:text-sm font-medium">
           <Link
             href="/dashboard"
-            className="flex items-center gap-1 hover:text-foreground transition-colors p-1 rounded-md hover:bg-muted"
-            title="Inicio"
+            className="text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
           >
-            <Home className="h-3.5 w-3.5" />
+            Dashboard
           </Link>
-          <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-          <span className="font-semibold text-foreground">{sectionLabel}</span>
+          <span className="text-zinc-300 dark:text-zinc-700 font-normal">›</span>
+          <span className="font-semibold text-zinc-900 dark:text-zinc-100">
+            {sectionLabel === 'Dashboard' ? 'Overview' : sectionLabel}
+          </span>
         </div>
+      </div>
 
-        {/* Barra de búsqueda estilo Pill con atajo rápido y protección anti-autofill */}
+      {/* Lado Derecho: Buscador Search... [⌘ K], Campana, Ajustes y Avatar */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        {/* Barra de búsqueda estilo captura con ⌘ K */}
         <form
           role="search"
           onSubmit={(e) => {
@@ -279,9 +240,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           }}
           autoComplete="off"
           ref={searchBoxRef}
-          className="relative w-full max-w-xs sm:max-w-md"
+          className="relative hidden sm:block w-48 md:w-60 lg:w-64"
         >
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70 pointer-events-none" />
+          <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-zinc-400 pointer-events-none" />
           <Input
             ref={searchInputRef}
             id="nova-global-search-input"
@@ -295,7 +256,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             data-1p-ignore="true"
             data-form-type="other"
             data-bwignore="true"
-            placeholder="Buscar productos, clientes o facturas..."
+            placeholder="Search..."
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -305,10 +266,10 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             onBlur={() => {
               if (debounceTimer.current) clearTimeout(debounceTimer.current)
             }}
-            className="w-full pl-8 pr-12 h-9 rounded-full bg-muted/40 hover:bg-muted/70 focus:bg-card border-border/70 text-xs shadow-2xs focus-visible:ring-1 focus-visible:ring-primary/20 transition-all"
+            className="w-full pl-8 pr-12 h-8 rounded-lg bg-zinc-50/80 hover:bg-white focus:bg-white dark:bg-zinc-900/60 dark:hover:bg-zinc-900 dark:focus:bg-zinc-900 border-zinc-200/80 dark:border-zinc-800 text-xs text-zinc-800 dark:text-zinc-200 placeholder:text-zinc-400 focus-visible:ring-1 focus-visible:ring-zinc-400 transition-all"
           />
-          <kbd className="absolute right-2.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-mono font-medium text-muted-foreground/70 bg-card rounded border border-border/60 pointer-events-none shadow-2xs">
-            Alt+Q
+          <kbd className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-medium text-zinc-400 bg-white dark:bg-zinc-800 rounded border border-zinc-200/80 dark:border-zinc-700 pointer-events-none">
+            ⌘ K
           </kbd>
 
           {/* Menú flotante de resultados globales */}
@@ -420,67 +381,45 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         </form>
       </div>
 
-      {/* Lado Derecho: Fecha, Acciones rápidas, Notificaciones y Perfil de Usuario */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-        {/* Fecha en vivo estilo captura */}
-        {todayDate && (
-          <div className="hidden xl:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-muted-foreground bg-muted/40 border border-border/60">
-            <Calendar className="h-3.5 w-3.5 text-muted-foreground/80" />
-            <span>{todayDate}</span>
-          </div>
-        )}
-
+      {/* Lado Derecho: Acciones rápidas, Notificaciones y Perfil de Usuario (Estilo captura) */}
+      <div className="flex items-center gap-2 shrink-0">
         {/* Toggle de tema oscuro / claro */}
         <button
           type="button"
           onClick={toggleTheme}
           title={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
           aria-label="Alternar tema"
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer"
         >
-          {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </button>
 
-        {/* Botón de recargar / refrescar datos */}
-        <button
-          type="button"
-          onClick={handleRefresh}
-          title="Recargar datos"
-          aria-label="Recargar datos"
-          className="flex h-8 w-8 items-center justify-center rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
-        >
-          <RefreshCw className="h-3.5 w-3.5" />
-        </button>
-
-        {/* Campana de Notificaciones */}
+        {/* Campana de Notificaciones (Icono de la captura) */}
         <NotificationsDropdown />
 
-        {/* Botón Principal de Acción de alto contraste: + Nueva Venta */}
-        <Button
-          render={<Link href="/sales/new" />}
-          size="sm"
-          className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-xs hover:opacity-90 transition-opacity"
+        {/* Botón de configuración (Icono de la captura) */}
+        <Link
+          href="/admin"
+          title="Configuración"
+          aria-label="Configuración"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200/80 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-50 transition-colors cursor-pointer"
         >
-          <Plus className="h-3.5 w-3.5" />
-          <span>+ Nueva Venta</span>
-        </Button>
+          <Settings className="h-3.5 w-3.5" />
+        </Link>
 
         {/* Avatar Dropdown en el Header */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2.5 cursor-pointer rounded-full p-1 pl-2.5 pr-1 hover:bg-muted/70 transition-all duration-150 outline-none">
-            <div className="text-right hidden sm:block">
-              <div className="text-xs font-semibold text-foreground leading-tight">{user.name}</div>
-              <div className="text-[10px] text-muted-foreground/80 font-normal">{roleTitle}</div>
-            </div>
-            <div
-              className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 shadow-xs font-bold text-xs ring-2 ring-border/40 transition-colors ${
-                ACCENT_PALETTES[accent]?.avatarClass || 'bg-slate-950 text-white'
-              }`}
-            >
-              {userInitial}
+          <DropdownMenuTrigger className="flex items-center cursor-pointer rounded-full outline-none focus:ring-2 focus:ring-zinc-400">
+            <div className="h-8 w-8 rounded-full overflow-hidden border border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&h=120&q=80"
+                alt={user.name}
+                className="h-full w-full object-cover"
+              />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mt-2 rounded-2xl border-border shadow-2xl p-1.5">
+          <DropdownMenuContent align="end" className="w-56 mt-2 rounded-2xl border-zinc-200 dark:border-zinc-800 shadow-2xl p-1.5">
             <DropdownMenuGroup>
               <DropdownMenuLabel className="font-normal px-2.5 py-2">
                 <div className="flex flex-col gap-0.5">
