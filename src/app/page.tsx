@@ -1,6 +1,5 @@
-import { redirect } from 'next/navigation'
+import LoginPage from './login/page'
 
-export default async function Home() {
-  // Temporarily redirect to login since we can't check auth in server actions
-  redirect('/login')
+export default function Home() {
+  return <LoginPage />
 }
