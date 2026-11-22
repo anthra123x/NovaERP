@@ -54,3 +54,6 @@ next-env.d.ts
 
 # teamwork internal artifacts
 .agents/teamwork/
+
+# agent local technical memory
+**/*README.agent.md
