@@ -164,11 +164,11 @@ describe('user-preferences - Theme default & persistence', () => {
     expect(layoutContent).toContain("document.documentElement.classList.remove('dark')")
   })
 
-  it('login/page.tsx cuenta con selector de tema interactivo', () => {
-    const loginPath = path.resolve(__dirname, '../app/login/page.tsx')
-    const loginContent = fs.readFileSync(loginPath, 'utf8')
+  it('register/page.tsx cuenta con selector de tema interactivo', () => {
+    const registerPath = path.resolve(__dirname, '../app/register/page.tsx')
+    const registerContent = fs.readFileSync(registerPath, 'utf8')
 
-    expect(loginContent).toContain('toggleTheme')
-    expect(loginContent).toContain('aria-label="Cambiar tema visual"')
+    expect(registerContent).toContain('toggleTheme')
+    expect(registerContent).toContain('aria-label="Cambiar tema visual"')
   })
 })

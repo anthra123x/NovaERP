@@ -51,7 +51,7 @@ export interface UserPreferences {
 
 ## 3. Dependencias
 - Externas: `react` (`useSyncExternalStore`), `zod`, `@prisma/client`, `@supabase/supabase-js`, `@supabase/ssr`.
-- Internas: Consumido por `src/app/layout.tsx`, `src/app/login/page.tsx`, `src/app/register/page.tsx`, `src/components/layout/dashboard-layout.tsx` y `src/app/profile/page.tsx`.
+- Internas: Consumido por `src/app/layout.tsx`, `src/app/register/page.tsx`, `src/components/layout/dashboard-layout.tsx` y `src/app/profile/page.tsx`.
 
 ## 4. Mapa de archivos
 - `business-workflow.ts`: Definicion de sectores comerciales (`BusinessSector`), perfiles semanticos (`SECTOR_INFO`), defaults de flujo (`SECTOR_WORKFLOW_DEFAULTS`) y persistencia/sincronizacion reactiva de cliente.
@@ -69,7 +69,7 @@ export interface UserPreferences {
 
 ## 5. Logica y flujo
 1. **Inicializacion y Cero Destello (Zero Flash)**: En `layout.tsx`, el tag `<html>` incluye la clase `dark` por defecto. En `<head>`, un script bloqueante evalua `localStorage`. Si el usuario no ha definido preferencias o ha elegido `'dark'`, la clase `dark` se mantiene. Si explícitamente se guardó `'light'`, se remueve `dark` antes del primer pintado del cuerpo.
-2. **Sincronizacion Reactiva**: Vistas cliente como `login/page.tsx` y `register/page.tsx` usan `useSyncExternalStore` conectado a `subscribePreferences`. Al invocar `saveUserPreferences`, se notifica a la ventana y todas las pestañas/componentes sincronizan su estado visual inmediatamente.
+2. **Sincronizacion Reactiva**: Vistas cliente como `register/page.tsx` y componentes del dashboard usan `useSyncExternalStore` conectado a `subscribePreferences`. Al invocar `saveUserPreferences`, se notifica a la ventana y todas las pestañas/componentes sincronizan su estado visual inmediatamente.
 3. **Flujo y Perfiles Adaptativos por Sector**: `business-workflow.ts` expone `SECTOR_INFO` con etiquetas dinamicas de rol de cliente, productos, busqueda y accion principal, adaptando las vistas POS y tablas segun el sector activo. Ademas, `SECTOR_WORKFLOW_DEFAULTS` desactiva ventas a credito en sectores como `restaurant_gastronomy` y `grocery_supermarket`.
 4. **Persistencia tras Cierre de Sesion**: Al hacer logout en `/auth/logout`, las cookies de sesion de Supabase se invalidan en el servidor, pero el item `nova_erp_user_preferences` en el almacenamiento local del navegador se conserva. Por tanto, si el usuario habia configurado modo claro, la pantalla de login permanece en modo claro respetando su seleccion previa. Si nunca lo habia cambiado, permanece en modo oscuro.
 
@@ -87,7 +87,7 @@ export interface UserPreferences {
 - Establecimiento definitivo de `'dark'` como tema predeterminado del sistema.
 - Insercion de la clase `dark` en el `<html>` de `layout.tsx` y script inline de hidratacion segura.
 - Creacion de `subscribePreferences`, `getThemeSnapshot` y `getThemeServerSnapshot`.
-- Incorporacion del selector interactivo de tema en las vistas de acceso (`login/page.tsx` y `register/page.tsx`).
+- Incorporacion del selector interactivo de tema en la vista de registro (`register/page.tsx`) y cabecera autenticada.
 - Creacion de la suite de pruebas `src/lib/user-preferences.test.ts` con cobertura del 100% en flujos de tema y logout.
 
 ## 8. Como verificar
