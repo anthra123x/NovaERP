@@ -790,3 +790,163 @@
   animation: float-card-1 7s ease-in-out infinite 0.3s;
 }
 
+/* ============================================================ */
+/* LANDING PAGE: NAVEGACIÓN FLOTANTE & TRANSICIONES DE SECCIÓN  */
+/* ============================================================ */
+:root {
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.nav-floating-link {
+  transition:
+    color 160ms ease,
+    transform 180ms var(--ease-out);
+}
+
+.nav-floating-indicator {
+  transition:
+    clip-path 280ms var(--ease-in-out),
+    opacity 180ms var(--ease-out);
+  will-change: clip-path, opacity;
+}
+
+.landing-reveal {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0) scale(0.985);
+  transition:
+    opacity 560ms var(--ease-out),
+    transform 560ms var(--ease-out);
+}
+
+.landing-reveal[data-visible='true'] {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.landing-reveal-child {
+  opacity: 0;
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity 500ms var(--ease-out),
+    transform 500ms var(--ease-out);
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-child {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-stagger-1 {
+  transition-delay: 50ms;
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-stagger-2 {
+  transition-delay: 95ms;
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-stagger-3 {
+  transition-delay: 135ms;
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-stagger-4 {
+  transition-delay: 170ms;
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-stagger-5 {
+  transition-delay: 200ms;
+}
+
+.landing-reveal[data-visible='true'] .landing-reveal-stagger-6 {
+  transition-delay: 225ms;
+}
+
+.landing-card-hover {
+  transition:
+    border-color 200ms ease,
+    box-shadow 220ms var(--ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-floating-link:hover {
+    transform: translateY(-1px);
+  }
+
+  .landing-card-hover {
+    transition:
+      transform 220ms var(--ease-out),
+      border-color 200ms ease,
+      box-shadow 220ms var(--ease-out);
+  }
+
+  .landing-card-hover:hover {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@keyframes sector-swap-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 8px, 0) scale(0.992);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.animate-sector-swap {
+  animation: sector-swap-in 240ms var(--ease-out) both;
+}
+
+.faq-accordion-content {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 220ms var(--ease-out),
+    opacity 180ms var(--ease-out);
+}
+
+.faq-accordion-content[data-open='true'] {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.faq-accordion-inner {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-reveal,
+  .landing-reveal-child {
+    transform: none !important;
+    transition: opacity 150ms ease !important;
+    transition-delay: 0ms !important;
+  }
+
+  .nav-floating-indicator {
+    transition: opacity 150ms ease !important;
+  }
+
+  .nav-floating-link:hover,
+  .landing-card-hover:hover {
+    transform: none !important;
+  }
+
+  .animate-sector-swap {
+    animation: fade-in 150ms ease both !important;
+  }
+
+  .animate-float-1,
+  .animate-float-2,
+  .animate-float-3 {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  .faq-accordion-content {
+    transition: opacity 120ms ease !important;
+  }
+}
+
