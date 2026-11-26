@@ -20,18 +20,18 @@ export function NovaLogo({
   logoUrl,
   businessName,
 }: NovaLogoProps) {
-  const sizeClasses = {
-    sm: 'h-7 w-7 rounded-lg text-[13px]',
-    md: 'h-9 w-9 rounded-xl text-base',
-    lg: 'h-11 w-11 rounded-2xl text-lg',
-    xl: 'h-14 w-14 rounded-2xl text-2xl',
+  const heightClasses = {
+    sm: 'h-6',
+    md: 'h-8',
+    lg: 'h-10',
+    xl: 'h-12',
   }
 
   const iconSizes = {
-    sm: 'h-4 w-4',
-    md: 'h-5 w-5',
-    lg: 'h-6 w-6',
-    xl: 'h-8 w-8',
+    sm: 'h-6 w-6',
+    md: 'h-8 w-8',
+    lg: 'h-10 w-10',
+    xl: 'h-12 w-12',
   }
 
   const [imgError, setImgError] = React.useState(false)
@@ -40,50 +40,46 @@ export function NovaLogo({
     setImgError(false)
   }, [logoUrl])
 
-  return (
-    <div className={cn('inline-flex items-center gap-3 select-none', className)}>
-      {/* Icon Badge: Modern dark rounded square with geometric stylized N or custom company logo */}
-      <div
-        className={cn(
-          'relative flex shrink-0 items-center justify-center bg-gray-950 text-white font-bold shadow-xs transition-transform duration-200 ring-1 ring-white/10 overflow-hidden',
-          sizeClasses[size],
-        )}
-      >
-        {logoUrl && !imgError ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={logoUrl}
-            alt={businessName || 'Logo de la empresa'}
-            className="h-full w-full object-cover"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={cn('text-white stroke-[2.2]', iconSizes[size])}
-          >
-            <path d="M5 19V5L15 19V5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-            <circle cx="19" cy="5" r="2.2" fill="#10b981" />
-          </svg>
-        )}
+  // Si hay un logo personalizado de empresa cargado
+  if (logoUrl && !imgError) {
+    return (
+      <div className={cn('inline-flex items-center gap-3 select-none', className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={logoUrl}
+          alt={businessName || 'Logo de la empresa'}
+          className={cn('object-contain', heightClasses[size])}
+          onError={() => setImgError(true)}
+        />
+        {subtitle && <span className="text-[11px] font-medium text-muted-foreground truncate">{subtitle}</span>}
       </div>
+    )
+  }
 
-      {/* Wordmark */}
-      {showWordmark && (
-        <div className="flex flex-col min-w-0 leading-tight">
-          <div className={cn('flex items-center gap-1.5 font-bold tracking-tight text-foreground', wordmarkClassName)}>
-            <span className="text-base font-extrabold tracking-tight truncate max-w-[200px]">
-              {businessName || 'Nova'}
-            </span>
-            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-gray-950 text-white dark:bg-white dark:text-gray-950 tracking-wider shrink-0">
-              ERP
-            </span>
-          </div>
-          {subtitle && <span className="text-[11px] font-medium text-muted-foreground truncate">{subtitle}</span>}
-        </div>
-      )}
+  // Si se solicita solo el icono
+  if (!showWordmark) {
+    return (
+      <div className={cn('inline-flex items-center select-none', className)}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/nova-icon-transparent.png"
+          alt="Nova ERP"
+          className={cn('object-contain shrink-0', iconSizes[size])}
+        />
+      </div>
+    )
+  }
+
+  // Logo completo con marca (Icono N + Nova en blanco + ERP en gris fino)
+  return (
+    <div className={cn('inline-flex items-center gap-2 select-none', className)}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/nova-logo-transparent.png"
+        alt="Nova ERP"
+        className={cn('object-contain shrink-0', heightClasses[size], wordmarkClassName)}
+      />
+      {subtitle && <span className="text-[11px] font-medium text-muted-foreground truncate ml-1">{subtitle}</span>}
     </div>
   )
 }
